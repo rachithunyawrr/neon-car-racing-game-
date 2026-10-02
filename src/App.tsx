@@ -15,7 +15,15 @@ import {
   Info,
   Award,
   Pause,
-  Play
+  Play,
+  Flame,
+  Gauge,
+  HelpCircle,
+  RotateCcw,
+  Sparkles,
+  ChevronRight,
+  X,
+  Car
 } from 'lucide-react';
 
 /* ---------- AUDIO SYNTH ENGINE ---------- */
@@ -46,6 +54,37 @@ class SynthEngine {
     } else {
       this.startEngine();
     }
+  }
+
+  playBoost() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+    try {
+      // Turbo high-tech whoosh and pitch spool
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(850, this.ctx.currentTime + 0.3);
+
+      gain.gain.setValueAtTime(0.09, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.38);
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(400, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(1600, this.ctx.currentTime + 0.3);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.4);
+    } catch (e) {}
   }
 
   startEngine() {
@@ -134,6 +173,38 @@ class SynthEngine {
     } catch (e) {}
   }
 
+  playTireScreech() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+    try {
+      // High-frequency friction chirp / rubber skid
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(680 + Math.random() * 200, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(420, this.ctx.currentTime + 0.14);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1100, this.ctx.currentTime);
+      filter.Q.setValueAtTime(3.5, this.ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.045, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.15);
+    } catch (e) {}
+  }
+
   playCrash() {
     if (this.isMuted) return;
     this.init();
@@ -185,6 +256,49 @@ class SynthEngine {
       subOsc.stop(this.ctx.currentTime + 0.45);
     } catch (e) {}
   }
+
+  playCountdownBeep(isGo: boolean = false) {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      if (!isGo) {
+        // Electronic countdown pip (A4 ~ 440 Hz)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.09, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.16);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.18);
+      } else {
+        // High-energy launch chirp & turbo punch
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(780, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1250, this.ctx.currentTime + 0.3);
+
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2400, this.ctx.currentTime);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.42);
+      }
+    } catch (e) {}
+  }
 }
 
 const synth = new SynthEngine();
@@ -202,66 +316,411 @@ interface Vehicle {
   speedMultiplier: number;
   shiftSpeed: number;
   description: string;
+  role: string;
+  topSpeedLabel: string;
+  handlingLabel: string;
 }
 
 const VEHICLES: readonly Vehicle[] = [
   {
     id: 'titan',
     name: 'VX-TITAN',
-    mark: 'MARK III',
+    mark: 'BALANCED CRUISER',
+    role: 'Balanced & Durable',
+    topSpeedLabel: 'Fast (190 KM/H)',
+    handlingLabel: 'Medium Handling',
     color: 0x0a1e36, // Heavy dark slate blue
     underglow: 0x00f0ff, // Neon Cyan
-    velocity: 94,
-    agility: 65,
-    resilience: 80,
+    velocity: 90,
+    agility: 75,
+    resilience: 95,
     speedMultiplier: 1.0,
-    shiftSpeed: 8,
-    description: 'Fused carbon chassis with enhanced particle shielding. High stability and heavy road friction.'
+    shiftSpeed: 9,
+    description: 'Heavy reinforced chassis with solid stability. Best for beginners learning to weave through traffic.'
   },
   {
     id: 'blade',
     name: 'NEON-BLADE',
-    mark: 'MARK V',
+    mark: 'HYPER RACER',
+    role: 'Extreme Speed',
+    topSpeedLabel: 'Super Fast (240 KM/H)',
+    handlingLabel: 'Sharp Drift',
     color: 0x3d0728, // Deep crimson magenta
     underglow: 0xff2ec4, // Hot Neon Pink
     velocity: 99,
-    agility: 82,
-    resilience: 45,
+    agility: 85,
+    resilience: 50,
     speedMultiplier: 1.25,
-    shiftSpeed: 10,
-    description: 'Stripped core frame with dual supercharged grid-injectors. Fast, but delicate to collisions.'
+    shiftSpeed: 11,
+    description: 'Ultra-lightweight aerodynamic frame. Reaches insane speeds when paired with the Nitro Boost.'
   },
   {
     id: 'glide',
     name: 'CYBER-GLIDE',
-    mark: 'MARK I',
+    mark: 'AGILE HOVER',
+    role: 'Fastest Lane Switching',
+    topSpeedLabel: 'Medium (175 KM/H)',
+    handlingLabel: 'Instant Steer',
     color: 0x2e2402, // Cyber amber gold
     underglow: 0xffb703, // Bright Neon Amber
-    velocity: 85,
-    agility: 95,
-    resilience: 60,
-    speedMultiplier: 0.85,
-    shiftSpeed: 13,
-    description: 'Pneumatic vector steering and hover thrusters. Unmatched agility for rapid lane switches.'
+    velocity: 82,
+    agility: 99,
+    resilience: 65,
+    speedMultiplier: 0.88,
+    shiftSpeed: 14,
+    description: 'Hover thruster pads allow virtually instant lane swaps to easily slip through tight traffic gaps.'
   },
   {
     id: 'bmw',
     name: 'BMW E34',
-    mark: 'STANCE STYLE',
+    mark: 'STANCE LEGEND',
+    role: 'Pro Street Style',
+    topSpeedLabel: 'High (220 KM/H)',
+    handlingLabel: 'Responsive Grip',
     color: 0x111115, // Stealth jet black
     underglow: 0x7b2ff7, // Neon Indigo Violet
-    velocity: 96,
-    agility: 88,
+    velocity: 95,
+    agility: 90,
     resilience: 90,
     speedMultiplier: 1.15,
-    shiftSpeed: 11,
-    description: 'Procedurally synthesized retro E34 stance chassis. Ultra-low drop suspension with chrome dish wheels.'
+    shiftSpeed: 12,
+    description: 'Custom stance classic with low suspension, chrome deep dish rims, and great overall control.'
   }
 ];
 
+/* ---------- CIRCULAR RADIAL SPEEDOMETER GAUGE COMPONENT ---------- */
+function SpeedRadialGauge({ speed, isBoosting }: { speed: number; isBoosting: boolean }) {
+  const currentKmh = Math.round(speed * 6.5);
+  const maxKmh = 300;
+  const speedRatio = Math.min(1, Math.max(0, currentKmh / maxKmh));
+  
+  // 240 degree sweep from 150deg (down-left) to 390deg (down-right)
+  const cx = 80;
+  const cy = 80;
+  const radius = 53;
+  const circumference = 2 * Math.PI * radius; // ~333.01
+  const sweepAngle = 240;
+  const totalArc = circumference * (sweepAngle / 360); // ~222.01
+  const filledArc = speedRatio * totalArc;
+  
+  // Needle / tip angle
+  const needleAngle = 150 + speedRatio * sweepAngle;
+  const needleRad = (needleAngle * Math.PI) / 180;
+  
+  // Major calibration ticks: 0, 60, 120, 180, 240, 300 KM/H
+  const ticks = [
+    { kmh: 0, label: '0' },
+    { kmh: 60, label: '60' },
+    { kmh: 120, label: '120' },
+    { kmh: 180, label: '180' },
+    { kmh: 240, label: '240' },
+    { kmh: 300, label: '300' },
+  ];
+  
+  // Minor ticks at intervals between major graduations
+  const minorTicks = [30, 90, 150, 210, 270];
+
+  return (
+    <div className="relative flex flex-col items-center select-none" id="radial-speed-gauge-container">
+      <svg 
+        viewBox="0 0 160 160" 
+        className="w-28 h-28 sm:w-34 sm:h-34 overflow-visible"
+        aria-label={`Current speed: ${currentKmh} KM/H of ${maxKmh} KM/H`}
+      >
+        <defs>
+          <linearGradient id="radialSpeedGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#00f0ff" />
+            <stop offset="45%" stopColor="#00f0ff" />
+            <stop offset="70%" stopColor="#ffb703" />
+            <stop offset="88%" stopColor="#ff4500" />
+            <stop offset="100%" stopColor="#ff2ec4" />
+          </linearGradient>
+
+          <linearGradient id="boostGlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ff2ec4" />
+            <stop offset="50%" stopColor="#00f0ff" />
+            <stop offset="100%" stopColor="#fffb00" />
+          </linearGradient>
+
+          <filter id="gaugeNeonGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Outer subtle decorative frame ring */}
+        <circle 
+          cx={cx} 
+          cy={cy} 
+          r="73" 
+          fill="none" 
+          stroke="rgba(0, 240, 255, 0.12)" 
+          strokeWidth="1" 
+          strokeDasharray="4 6" 
+        />
+
+        {/* Redline Warning Sector Arc (220 to 300 KM/H) */}
+        {(() => {
+          const redlineStartAngle = 150 + (220 / maxKmh) * sweepAngle;
+          const redlineRad = (redlineStartAngle * Math.PI) / 180;
+          const redlineEndRad = ((150 + sweepAngle) * Math.PI) / 180;
+          const rOuter = 65;
+          const x1 = cx + rOuter * Math.cos(redlineRad);
+          const y1 = cy + rOuter * Math.sin(redlineRad);
+          const x2 = cx + rOuter * Math.cos(redlineEndRad);
+          const y2 = cy + rOuter * Math.sin(redlineEndRad);
+          return (
+            <path
+              d={`M ${x1} ${y1} A ${rOuter} ${rOuter} 0 0 1 ${x2} ${y2}`}
+              fill="none"
+              stroke={isBoosting ? '#ff2ec4' : currentKmh > 220 ? '#ff0055' : 'rgba(255, 0, 85, 0.45)'}
+              strokeWidth="2.5"
+              strokeDasharray="3 3"
+              className={currentKmh > 220 ? 'animate-pulse' : ''}
+            />
+          );
+        })()}
+
+        {/* Major Ticks and Calibration Labels */}
+        {ticks.map(t => {
+          const angle = 150 + (t.kmh / maxKmh) * sweepAngle;
+          const rad = (angle * Math.PI) / 180;
+          const isPassed = currentKmh >= t.kmh;
+          const x1 = cx + 60 * Math.cos(rad);
+          const y1 = cy + 60 * Math.sin(rad);
+          const x2 = cx + 66 * Math.cos(rad);
+          const y2 = cy + 66 * Math.sin(rad);
+          
+          // Numerical label position outside ticks
+          const xt = cx + 74 * Math.cos(rad);
+          const yt = cy + 74 * Math.sin(rad) + 2.5;
+
+          const isRedline = t.kmh >= 240;
+          const tickColor = isPassed
+            ? (isBoosting ? '#ff2ec4' : isRedline ? '#ff0055' : t.kmh > 150 ? '#ffb703' : '#00f0ff')
+            : 'rgba(255, 255, 255, 0.25)';
+
+          return (
+            <g key={t.kmh}>
+              <line 
+                x1={x1} 
+                y1={y1} 
+                x2={x2} 
+                y2={y2} 
+                stroke={tickColor} 
+                strokeWidth={isPassed ? 2 : 1.2} 
+                strokeLinecap="round" 
+              />
+              <text 
+                x={xt} 
+                y={yt} 
+                textAnchor="middle" 
+                fontSize="6" 
+                fontFamily="var(--font-orbitron), Orbitron, monospace" 
+                fill={isPassed ? (isRedline ? '#ff0055' : '#00f0ff') : 'rgba(255,255,255,0.35)'} 
+                fontWeight={isPassed ? 'bold' : 'normal'}
+              >
+                {t.label}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Minor Intermediate Ticks */}
+        {minorTicks.map(m => {
+          const angle = 150 + (m / maxKmh) * sweepAngle;
+          const rad = (angle * Math.PI) / 180;
+          const isPassed = currentKmh >= m;
+          const x1 = cx + 61 * Math.cos(rad);
+          const y1 = cy + 61 * Math.sin(rad);
+          const x2 = cx + 64 * Math.cos(rad);
+          const y2 = cy + 64 * Math.sin(rad);
+          return (
+            <line 
+              key={m} 
+              x1={x1} 
+              y1={y1} 
+              x2={x2} 
+              y2={y2} 
+              stroke={isPassed ? '#00f0ff88' : 'rgba(255,255,255,0.12)'} 
+              strokeWidth="1" 
+              strokeLinecap="round" 
+            />
+          );
+        })}
+
+        {/* Background Track Arc */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.08)"
+          strokeWidth="7"
+          strokeDasharray={`${totalArc} ${circumference}`}
+          strokeLinecap="round"
+          transform={`rotate(150 ${cx} ${cy})`}
+        />
+
+        {/* Active Speed Progress Arc */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke={isBoosting ? "url(#boostGlowGrad)" : "url(#radialSpeedGrad)"}
+          strokeWidth="7"
+          strokeDasharray={`${filledArc} ${circumference}`}
+          strokeLinecap="round"
+          transform={`rotate(150 ${cx} ${cy})`}
+          style={{ 
+            transition: 'stroke-dasharray 0.08s ease-out',
+            filter: isBoosting 
+              ? 'drop-shadow(0 0 10px #ff2ec4)' 
+              : currentKmh > 180 
+                ? 'drop-shadow(0 0 8px #ff4500)' 
+                : 'drop-shadow(0 0 6px #00f0ff)'
+          }}
+        />
+
+        {/* Glowing Head Node at the current speed tip of the arc */}
+        {filledArc > 1 && (
+          <circle
+            cx={cx + radius * Math.cos(needleRad)}
+            cy={cy + radius * Math.sin(needleRad)}
+            r={isBoosting ? "4" : "3.2"}
+            fill="#ffffff"
+            style={{ 
+              filter: `drop-shadow(0 0 8px ${isBoosting ? '#ff2ec4' : currentKmh > 180 ? '#ff4500' : '#00f0ff'})`,
+              transition: 'cx 0.08s ease-out, cy 0.08s ease-out'
+            }}
+          />
+        )}
+
+        {/* Analog Needle Indicator */}
+        <g 
+          style={{ 
+            transform: `rotate(${needleAngle}deg)`, 
+            transformOrigin: `${cx}px ${cy}px`,
+            transition: 'transform 0.09s cubic-bezier(0.18, 0.85, 0.3, 1)' 
+          }}
+        >
+          {/* Needle stem */}
+          <line
+            x1={cx + 14}
+            y1={cy}
+            x2={cx + radius - 2}
+            y2={cy}
+            stroke={isBoosting ? '#ff2ec4' : currentKmh > 180 ? '#ff4500' : '#00f0ff'}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            style={{ 
+              filter: `drop-shadow(0 0 6px ${isBoosting ? '#ff2ec4' : currentKmh > 180 ? '#ff4500' : '#00f0ff'})` 
+            }}
+          />
+          {/* Counterweight */}
+          <line
+            x1={cx - 10}
+            y1={cy}
+            x2={cx - 4}
+            y2={cy}
+            stroke="rgba(255,255,255,0.3)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        </g>
+
+        {/* Center Digital Cockpit Hub */}
+        <circle 
+          cx={cx} 
+          cy={cy} 
+          r="36" 
+          fill="#070810" 
+          stroke={isBoosting ? '#ff2ec4' : currentKmh > 180 ? '#ff4500' : 'rgba(0, 240, 255, 0.35)'} 
+          strokeWidth="1.5"
+          style={{
+            filter: isBoosting ? 'drop-shadow(0 0 10px rgba(255, 46, 196, 0.3))' : 'none'
+          }}
+        />
+
+        {/* Center Pivot Point */}
+        <circle cx={cx} cy={cy} r="4" fill="#141724" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+        <circle cx={cx} cy={cy} r="1.5" fill={isBoosting ? '#ff2ec4' : '#00f0ff'} />
+
+        {/* Digital Speed Number */}
+        <text
+          x={cx}
+          y={cy - 6}
+          textAnchor="middle"
+          fontSize="17"
+          fontWeight="900"
+          fontFamily="var(--font-orbitron), Orbitron, monospace"
+          fill={isBoosting ? '#ff2ec4' : currentKmh > 180 ? '#ff4500' : '#ffffff'}
+          style={{
+            filter: isBoosting ? 'drop-shadow(0 0 8px rgba(255,46,196,0.8))' : 'drop-shadow(0 0 6px rgba(0,240,255,0.5))'
+          }}
+        >
+          {currentKmh}
+        </text>
+
+        {/* KM/H Unit Subtext */}
+        <text
+          x={cx}
+          y={cy + 8}
+          textAnchor="middle"
+          fontSize="7"
+          fontWeight="bold"
+          fontFamily="var(--font-orbitron), Orbitron, monospace"
+          fill="#00f0ff"
+          letterSpacing="0.15em"
+        >
+          KM/H
+        </text>
+
+        {/* Relative Acceleration / Relative Max Speed Indicator */}
+        <text
+          x={cx}
+          y={cy + 22}
+          textAnchor="middle"
+          fontSize="6"
+          fontWeight="600"
+          fontFamily="monospace"
+          fill={isBoosting ? '#ff2ec4' : 'rgba(255,255,255,0.6)'}
+          letterSpacing="0.08em"
+        >
+          {isBoosting ? '⚡ NITRO' : `${Math.round(speedRatio * 100)}% MAX`}
+        </text>
+      </svg>
+
+      {/* Visual bottom acceleration status */}
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <span className={`text-[8px] font-mono tracking-widest uppercase px-2 py-0.5 rounded-full border ${
+          isBoosting 
+            ? 'bg-[#ff2ec4]/20 border-[#ff2ec4] text-white animate-pulse' 
+            : currentKmh > 180 
+              ? 'bg-[#ff4500]/20 border-[#ff4500] text-[#ff4500]' 
+              : currentKmh > 90 
+                ? 'bg-[#00f0ff]/10 border-[#00f0ff]/40 text-[#00f0ff]' 
+                : 'bg-white/5 border-white/10 text-white/40'
+        }`}>
+          {isBoosting ? 'OVERDRIVE ACTIVE' : currentKmh > 180 ? 'HIGH VELOCITY' : currentKmh > 90 ? 'CRUISE MODE' : 'ACCELERATING'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   /* ---------- REACT STATE ---------- */
-  const [gameState, setGameState] = useState<'title' | 'playing' | 'gameover'>('title');
+  const [gameState, setGameState] = useState<'title' | 'countdown' | 'playing' | 'gameover'>('title');
+  const [countdownVal, setCountdownVal] = useState<'3' | '2' | '1' | 'GO!' | ''>('3');
+  const [countdownSubtext, setCountdownSubtext] = useState<string>('GET READY');
+  const countdownTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const startRaceCountdownRef = useRef<() => void>(() => {});
+
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(() => {
     try {
@@ -276,9 +735,9 @@ export default function App() {
   const [muted, setMuted] = useState<boolean>(false);
   const [username, setUsername] = useState<string>(() => {
     try {
-      return localStorage.getItem('neon_rush_username') || 'SEEKER_X';
+      return localStorage.getItem('neon_rush_username') || 'PLAYER 1';
     } catch {
-      return 'SEEKER_X';
+      return 'PLAYER 1';
     }
   });
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
@@ -286,14 +745,10 @@ export default function App() {
   const [dodgeCount, setDodgeCount] = useState<number>(0);
   const [ping, setPing] = useState<number>(12);
 
-  // Leaderboard mock players + active player inserted dynamically
-  const [leaderboard, setLeaderboard] = useState([
-    { name: 'HYPER_V', score: 142092 },
-    { name: 'NULL_POINTER', score: 128440 },
-    { name: 'GHOST_SHELL', score: 115201 },
-    { name: 'DATA_DRIFT', score: 98332 },
-    { name: 'CYBER_PUNK', score: 87110 }
-  ]);
+  // Nitro Boost state
+  const [boostFuel, setBoostFuel] = useState<number>(100);
+  const [isBoosting, setIsBoosting] = useState<boolean>(false);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   /* ---------- REFS ---------- */
   const containerRef = useRef<HTMLDivElement>(null);
@@ -303,6 +758,16 @@ export default function App() {
   // Active vehicle state ref for the fast-paced Three.js animation loop
   const activeVehicleRef = useRef<Vehicle>(VEHICLES[0]);
   const pausedRef = useRef<boolean>(false);
+
+  // Clean countdown timers on unmount
+  const clearCountdownTimers = () => {
+    countdownTimersRef.current.forEach(t => clearTimeout(t));
+    countdownTimersRef.current = [];
+  };
+
+  useEffect(() => {
+    return () => clearCountdownTimers();
+  }, []);
 
   // Sync paused state to ref and adjust engine sound pitch
   useEffect(() => {
@@ -355,7 +820,7 @@ export default function App() {
   // Submit username change
   const handleSaveUsername = () => {
     let clean = nameInput.trim().toUpperCase().substring(0, 14);
-    if (!clean) clean = 'SEEKER_X';
+    if (!clean) clean = 'RACER_1';
     setUsername(clean);
     setIsEditingName(false);
     try {
@@ -364,20 +829,69 @@ export default function App() {
   };
 
   /* ---------- GAME ACTION TRIGGER HANDLERS ---------- */
-  const startGame = () => {
+  const startRaceCountdown = () => {
+    clearCountdownTimers();
     synth.init();
     synth.startEngine();
-    setGameState('playing');
     setPaused(false);
     setDodgeCount(0);
-    if (gameLoopRef.current && typeof gameLoopRef.current.resetGame === 'function') {
-      gameLoopRef.current.resetGame();
+    setGameState('countdown');
+    setCountdownVal('3');
+    setCountdownSubtext('GET READY');
+
+    // Notify Three.js scene to align car on grid
+    if (gameLoopRef.current && typeof gameLoopRef.current.prepareCountdown === 'function') {
+      gameLoopRef.current.prepareCountdown();
     }
+
+    // Step 3 (0ms)
+    synth.playCountdownBeep(false);
+    synth.updateEngine(35);
+
+    // Step 2 (750ms)
+    const t1 = setTimeout(() => {
+      setCountdownVal('2');
+      setCountdownSubtext('SET');
+      synth.playCountdownBeep(false);
+      synth.updateEngine(60);
+    }, 750);
+
+    // Step 1 (1500ms)
+    const t2 = setTimeout(() => {
+      setCountdownVal('1');
+      setCountdownSubtext('REV UP');
+      synth.playCountdownBeep(false);
+      synth.updateEngine(90);
+    }, 1500);
+
+    // Step GO! (2250ms)
+    const t3 = setTimeout(() => {
+      setCountdownVal('GO!');
+      setCountdownSubtext('LAUNCH!');
+      synth.playCountdownBeep(true);
+      synth.playBoost();
+      if (gameLoopRef.current && typeof gameLoopRef.current.launchRace === 'function') {
+        gameLoopRef.current.launchRace();
+      }
+    }, 2250);
+
+    // Enter full playing state (2950ms)
+    const t4 = setTimeout(() => {
+      setGameState('playing');
+    }, 2950);
+
+    countdownTimersRef.current = [t1, t2, t3, t4];
+  };
+
+  startRaceCountdownRef.current = startRaceCountdown;
+
+  const startGame = () => {
+    startRaceCountdown();
   };
 
   const restartGame = () => {
     setPaused(false);
-    startGame();
+    startRaceCountdown();
   };
 
   // Setup Three.js Grid Engine
@@ -1071,8 +1585,10 @@ export default function App() {
     let carCabinMesh: THREE.Mesh;
     let underglowMesh: THREE.Mesh;
     let underglowPointLight: THREE.PointLight;
+    let nitroThrustLight: THREE.PointLight;
     let wheelMeshes: THREE.Mesh[] = [];
     let lateralTrimMeshes: THREE.Mesh[] = [];
+    let nitroFlameMeshes: THREE.Mesh[] = [];
 
     const buildActiveCar = () => {
       // Clear previous elements if existing
@@ -1081,6 +1597,7 @@ export default function App() {
       }
       wheelMeshes = [];
       lateralTrimMeshes = [];
+      nitroFlameMeshes = [];
 
       const activeV = activeVehicleRef.current;
 
@@ -1174,6 +1691,18 @@ export default function App() {
         exh2.position.set(-0.35, 0.18, -1.65);
         carGroup.add(exh1);
         carGroup.add(exh2);
+
+        // Nitro exhaust flames for BMW
+        const bmwFlameGeo = new THREE.ConeGeometry(0.12, 0.75, 8);
+        const bmwFlameMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.85 });
+        [-0.45, -0.35].forEach(fx => {
+          const flame = new THREE.Mesh(bmwFlameGeo, bmwFlameMat.clone());
+          flame.rotation.x = -Math.PI / 2;
+          flame.position.set(fx, 0.18, -2.1);
+          flame.visible = false;
+          carGroup.add(flame);
+          nitroFlameMeshes.push(flame);
+        });
 
         // 7. Stretched tires / Deep dish chrome wheels (Stance style!)
         const wheelOffsets = [
@@ -1350,7 +1879,32 @@ export default function App() {
           carGroup.add(wing);
           lateralTrimMeshes.push(wing);
         });
+
+        // Dual rear nitro thrusters and flames for standard vehicles
+        const nozzleGeo = new THREE.CylinderGeometry(0.07, 0.09, 0.22, 10);
+        const nozzleMat = new THREE.MeshStandardMaterial({ color: 0x181822, metalness: 0.9, roughness: 0.2 });
+        const flameGeo = new THREE.ConeGeometry(0.14, 0.75, 8);
+        const flameMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.85 });
+
+        [-0.42, 0.42].forEach(tx => {
+          const nozzle = new THREE.Mesh(nozzleGeo, nozzleMat);
+          nozzle.rotation.x = Math.PI / 2;
+          nozzle.position.set(tx, 0.28, -1.6);
+          carGroup.add(nozzle);
+
+          const flame = new THREE.Mesh(flameGeo, flameMat.clone());
+          flame.rotation.x = -Math.PI / 2;
+          flame.position.set(tx, 0.28, -2.1);
+          flame.visible = false;
+          carGroup.add(flame);
+          nitroFlameMeshes.push(flame);
+        });
       }
+
+      // Dynamic glowing thruster exhaust light on the road
+      nitroThrustLight = new THREE.PointLight(0x00f0ff, 0, 8);
+      nitroThrustLight.position.set(0, 0.28, -1.9);
+      carGroup.add(nitroThrustLight);
 
       carGroup.position.set(0, 0.12, CAR_Z);
     };
@@ -1358,8 +1912,201 @@ export default function App() {
     buildActiveCar();
     scene.add(carGroup);
 
+    /* ---------- DYNAMIC NITRO PARTICLE SYSTEM TRAILS ---------- */
+    const MAX_NITRO_PARTICLES = 360;
+    interface NitroParticle {
+      pos: THREE.Vector3;
+      vel: THREE.Vector3;
+      life: number;
+      maxLife: number;
+      baseR: number;
+      baseG: number;
+      baseB: number;
+      active: boolean;
+    }
+
+    const nitroParticles: NitroParticle[] = [];
+    const nitroPositions = new Float32Array(MAX_NITRO_PARTICLES * 3);
+    const nitroColors = new Float32Array(MAX_NITRO_PARTICLES * 3);
+
+    for (let i = 0; i < MAX_NITRO_PARTICLES; i++) {
+      nitroParticles.push({
+        pos: new THREE.Vector3(0, -9999, 0),
+        vel: new THREE.Vector3(),
+        life: 0,
+        maxLife: 1,
+        baseR: 0,
+        baseG: 1,
+        baseB: 1,
+        active: false
+      });
+      nitroPositions[i * 3] = 0;
+      nitroPositions[i * 3 + 1] = -9999;
+      nitroPositions[i * 3 + 2] = 0;
+      nitroColors[i * 3] = 0;
+      nitroColors[i * 3 + 1] = 0;
+      nitroColors[i * 3 + 2] = 0;
+    }
+
+    const nitroGeo = new THREE.BufferGeometry();
+    const nitroPositionsAttr = new THREE.BufferAttribute(nitroPositions, 3);
+    const nitroColorsAttr = new THREE.BufferAttribute(nitroColors, 3);
+    nitroGeo.setAttribute('position', nitroPositionsAttr);
+    nitroGeo.setAttribute('color', nitroColorsAttr);
+
+    // Procedural soft-glow radial circle sprite
+    const createParticleCanvasTexture = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.18, 'rgba(180, 250, 255, 0.95)');
+        grad.addColorStop(0.48, 'rgba(0, 240, 255, 0.65)');
+        grad.addColorStop(0.75, 'rgba(255, 46, 196, 0.35)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 64, 64);
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.generateMipmaps = false;
+      tex.minFilter = THREE.LinearFilter;
+      return tex;
+    };
+
+    const nitroPointsMat = new THREE.PointsMaterial({
+      size: 0.95,
+      map: createParticleCanvasTexture(),
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true
+    });
+
+    const nitroParticleSystem = new THREE.Points(nitroGeo, nitroPointsMat);
+    scene.add(nitroParticleSystem);
+
+    let nitroParticleIndex = 0;
+
+    const resetNitroParticles = () => {
+      for (let i = 0; i < MAX_NITRO_PARTICLES; i++) {
+        nitroParticles[i].active = false;
+        nitroParticles[i].pos.set(0, -9999, 0);
+        nitroPositions[i * 3] = 0;
+        nitroPositions[i * 3 + 1] = -9999;
+        nitroPositions[i * 3 + 2] = 0;
+        nitroColors[i * 3] = 0;
+        nitroColors[i * 3 + 1] = 0;
+        nitroColors[i * 3 + 2] = 0;
+      }
+      nitroPositionsAttr.needsUpdate = true;
+      nitroColorsAttr.needsUpdate = true;
+    };
+
+    /* ---------- DYNAMIC DRIFT SMOKE PARTICLE SYSTEM ---------- */
+    const MAX_DRIFT_PARTICLES = 240;
+    interface DriftParticle {
+      pos: THREE.Vector3;
+      vel: THREE.Vector3;
+      life: number;
+      maxLife: number;
+      baseR: number;
+      baseG: number;
+      baseB: number;
+      active: boolean;
+    }
+
+    const driftParticles: DriftParticle[] = [];
+    const driftPositions = new Float32Array(MAX_DRIFT_PARTICLES * 3);
+    const driftColors = new Float32Array(MAX_DRIFT_PARTICLES * 3);
+
+    for (let i = 0; i < MAX_DRIFT_PARTICLES; i++) {
+      driftParticles.push({
+        pos: new THREE.Vector3(0, -9999, 0),
+        vel: new THREE.Vector3(),
+        life: 0,
+        maxLife: 1,
+        baseR: 0.9,
+        baseG: 0.92,
+        baseB: 0.96,
+        active: false
+      });
+      driftPositions[i * 3] = 0;
+      driftPositions[i * 3 + 1] = -9999;
+      driftPositions[i * 3 + 2] = 0;
+      driftColors[i * 3] = 0;
+      driftColors[i * 3 + 1] = 0;
+      driftColors[i * 3 + 2] = 0;
+    }
+
+    const driftGeo = new THREE.BufferGeometry();
+    const driftPositionsAttr = new THREE.BufferAttribute(driftPositions, 3);
+    const driftColorsAttr = new THREE.BufferAttribute(driftColors, 3);
+    driftGeo.setAttribute('position', driftPositionsAttr);
+    driftGeo.setAttribute('color', driftColorsAttr);
+
+    // Procedural volumetric cloud/smoke puff texture
+    const createSmokeCanvasTexture = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        grad.addColorStop(0.2, 'rgba(235, 245, 255, 0.75)');
+        grad.addColorStop(0.5, 'rgba(180, 205, 240, 0.38)');
+        grad.addColorStop(0.8, 'rgba(120, 145, 185, 0.12)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 64, 64);
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.generateMipmaps = false;
+      tex.minFilter = THREE.LinearFilter;
+      return tex;
+    };
+
+    const driftPointsMat = new THREE.PointsMaterial({
+      size: 1.6,
+      map: createSmokeCanvasTexture(),
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true
+    });
+
+    const driftParticleSystem = new THREE.Points(driftGeo, driftPointsMat);
+    scene.add(driftParticleSystem);
+
+    let driftParticleIndex = 0;
+    let lastDriftScreechTime = 0;
+
+    const resetDriftParticles = () => {
+      for (let i = 0; i < MAX_DRIFT_PARTICLES; i++) {
+        driftParticles[i].active = false;
+        driftParticles[i].pos.set(0, -9999, 0);
+        driftPositions[i * 3] = 0;
+        driftPositions[i * 3 + 1] = -9999;
+        driftPositions[i * 3 + 2] = 0;
+        driftColors[i * 3] = 0;
+        driftColors[i * 3 + 1] = 0;
+        driftColors[i * 3 + 2] = 0;
+      }
+      driftPositionsAttr.needsUpdate = true;
+      driftColorsAttr.needsUpdate = true;
+    };
+
     /* ---------- PROCEDURAL AI TRAFFIC GENERATOR ---------- */
-    const generateTrafficCarGroup = (type: 'sedan' | 'sports' | 'truck' | 'taxi', carColor: number) => {
+    type TrafficVehicleType = 'sedan' | 'sports' | 'truck' | 'taxi' | 'van' | 'muscle' | 'supercar' | 'cybercab';
+
+    const generateTrafficCarGroup = (type: TrafficVehicleType, carColor: number) => {
       const group = new THREE.Group();
 
       let bodyGeo: THREE.BoxGeometry;
@@ -1374,7 +2121,7 @@ export default function App() {
         cabinGeo = new THREE.BoxGeometry(1.1, 0.35, 1.3);
         cabinY = 0.48;
         cabinZ = -0.15;
-        // Add a rear spoiler wing
+        // Rear aerodynamic spoiler wing
         const spoilerGeo = new THREE.BoxGeometry(1.5, 0.06, 0.25);
         const spoilerMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
         const spoiler = new THREE.Mesh(spoilerGeo, spoilerMat);
@@ -1388,32 +2135,118 @@ export default function App() {
           strut.position.set(sx, 0.45, -1.35);
           group.add(strut);
         });
+      } else if (type === 'supercar') {
+        // Ultra-low, wide wedge exotic shape
+        bodyGeo = new THREE.BoxGeometry(1.62, 0.28, 3.35);
+        cabinGeo = new THREE.BoxGeometry(1.05, 0.28, 1.25);
+        cabinY = 0.42;
+        cabinZ = -0.1;
+        wheelRadius = 0.33;
+        wheelWidth = 0.28;
+
+        // Twin aerodynamic rear fins
+        const finGeo = new THREE.BoxGeometry(0.08, 0.3, 0.7);
+        const finMat = new THREE.MeshStandardMaterial({ color: 0x18181f, roughness: 0.3 });
+        [-0.65, 0.65].forEach(fx => {
+          const fin = new THREE.Mesh(finGeo, finMat);
+          fin.position.set(fx, 0.48, -1.1);
+          group.add(fin);
+        });
+
+        // Rear carbon diffuser
+        const diffuserGeo = new THREE.BoxGeometry(1.4, 0.12, 0.3);
+        const diffuserMat = new THREE.MeshBasicMaterial({ color: 0x050508 });
+        const diffuser = new THREE.Mesh(diffuserGeo, diffuserMat);
+        diffuser.position.set(0, 0.15, -1.65);
+        group.add(diffuser);
+      } else if (type === 'muscle') {
+        // Aggressive boxy muscle car with hood scoop
+        bodyGeo = new THREE.BoxGeometry(1.56, 0.48, 3.2);
+        cabinGeo = new THREE.BoxGeometry(1.18, 0.38, 1.35);
+        cabinY = 0.62;
+        cabinZ = -0.22;
+        wheelRadius = 0.34;
+        wheelWidth = 0.30;
+
+        // Big power hood scoop blower
+        const scoopGeo = new THREE.BoxGeometry(0.5, 0.18, 0.6);
+        const scoopMat = new THREE.MeshStandardMaterial({ color: 0x1c1c22, roughness: 0.4 });
+        const scoop = new THREE.Mesh(scoopGeo, scoopMat);
+        scoop.position.set(0, 0.68, 0.85);
+        group.add(scoop);
+
+        // Rear lip ducktail spoiler
+        const lipGeo = new THREE.BoxGeometry(1.4, 0.12, 0.15);
+        const lipMat = new THREE.MeshStandardMaterial({ color: 0x111116 });
+        const lip = new THREE.Mesh(lipGeo, lipMat);
+        lip.position.set(0, 0.65, -1.55);
+        group.add(lip);
       } else if (type === 'truck') {
-        bodyGeo = new THREE.BoxGeometry(1.65, 0.65, 3.4);
-        cabinGeo = new THREE.BoxGeometry(1.4, 0.55, 1.8);
-        cabinY = 0.9;
-        cabinZ = 0.45; // Cab forward SUV/truck style
-        wheelRadius = 0.38; // bigger heavy tires
+        // Heavy duty pickup truck with cab and open cargo bed
+        bodyGeo = new THREE.BoxGeometry(1.68, 0.65, 3.45);
+        cabinGeo = new THREE.BoxGeometry(1.42, 0.55, 1.75);
+        cabinY = 0.92;
+        cabinZ = 0.45; // Forward cabin
+        wheelRadius = 0.38; // Heavy off-road tires
         wheelWidth = 0.32;
 
         // Bed/cargo box details for pickup truck
-        const bedGeo = new THREE.BoxGeometry(1.5, 0.4, 1.4);
+        const bedGeo = new THREE.BoxGeometry(1.5, 0.4, 1.45);
         const bedMat = new THREE.MeshStandardMaterial({ color: 0x22222a });
         const bed = new THREE.Mesh(bedGeo, bedMat);
-        bed.position.set(0, 0.7, -0.85);
+        bed.position.set(0, 0.72, -0.85);
         group.add(bed);
+
+        // Heavy front bull-bar bumper
+        const bullBarGeo = new THREE.BoxGeometry(1.55, 0.3, 0.15);
+        const bullBarMat = new THREE.MeshStandardMaterial({ color: 0x444450, metalness: 0.8 });
+        const bullBar = new THREE.Mesh(bullBarGeo, bullBarMat);
+        bullBar.position.set(0, 0.45, 1.75);
+        group.add(bullBar);
+      } else if (type === 'van') {
+        // Tall futuristic delivery van / cyberpunk hauler
+        bodyGeo = new THREE.BoxGeometry(1.62, 0.82, 3.5);
+        cabinGeo = new THREE.BoxGeometry(1.5, 0.72, 2.3);
+        cabinY = 0.95;
+        cabinZ = -0.15;
+        wheelRadius = 0.35;
+        wheelWidth = 0.28;
+
+        // Roof rack cargo bar
+        const rackGeo = new THREE.BoxGeometry(1.3, 0.08, 1.8);
+        const rackMat = new THREE.MeshStandardMaterial({ color: 0x33333f, metalness: 0.7 });
+        const rack = new THREE.Mesh(rackGeo, rackMat);
+        rack.position.set(0, 1.42, -0.2);
+        group.add(rack);
       } else if (type === 'taxi') {
+        // Metropolitan City Taxi
         bodyGeo = new THREE.BoxGeometry(1.48, 0.46, 2.95);
-        cabinGeo = new THREE.BoxGeometry(1.05, 0.40, 1.4);
+        cabinGeo = new THREE.BoxGeometry(1.08, 0.40, 1.45);
         cabinY = 0.58;
         
-        // Taxi top sign
-        const signGeo = new THREE.BoxGeometry(0.35, 0.16, 0.16);
+        // Taxi top roof sign
+        const signGeo = new THREE.BoxGeometry(0.38, 0.16, 0.18);
         const signMat = new THREE.MeshBasicMaterial({ color: 0xffb703 }); // Glowing amber taxi sign
         const sign = new THREE.Mesh(signGeo, signMat);
-        sign.position.set(0, 0.86, -0.15);
+        sign.position.set(0, 0.88, -0.15);
         group.add(sign);
+      } else if (type === 'cybercab') {
+        // Sleek autonomous cyberpunk shuttle / cab
+        bodyGeo = new THREE.BoxGeometry(1.45, 0.52, 2.85);
+        cabinGeo = new THREE.BoxGeometry(1.15, 0.48, 2.0);
+        cabinY = 0.65;
+        cabinZ = 0;
+        wheelRadius = 0.30;
+        wheelWidth = 0.24;
+
+        // Autonomous sensor beacon on roof
+        const sensorGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.12, 8);
+        const sensorMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+        const sensor = new THREE.Mesh(sensorGeo, sensorMat);
+        sensor.position.set(0, 0.96, 0);
+        group.add(sensor);
       } else { // 'sedan'
+        // Standard highway commuter sedan
         bodyGeo = new THREE.BoxGeometry(1.5, 0.45, 3.0);
         cabinGeo = new THREE.BoxGeometry(1.1, 0.4, 1.45);
         cabinY = 0.58;
@@ -1422,8 +2255,8 @@ export default function App() {
       // 1. Car main body mesh
       const bodyMat = new THREE.MeshStandardMaterial({ 
         color: carColor, 
-        metalness: 0.65, 
-        roughness: 0.35 
+        metalness: type === 'supercar' ? 0.85 : 0.65, 
+        roughness: type === 'supercar' ? 0.2 : 0.35 
       });
       const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
       bodyMesh.position.y = bodyGeo.parameters.height / 2 + 0.12;
@@ -1442,8 +2275,9 @@ export default function App() {
       group.add(cabinMesh);
 
       // 3. Four wheels (cylinders)
-      const wZOffsets = type === 'truck' ? [0.95, -1.1] : [0.8, -1.0];
-      const wXOffset = type === 'truck' ? 0.88 : 0.82;
+      const isHeavy = type === 'truck' || type === 'van';
+      const wZOffsets = isHeavy ? [1.0, -1.15] : [0.82, -1.02];
+      const wXOffset = isHeavy ? 0.88 : (type === 'supercar' ? 0.86 : 0.82);
       const wheelOffsets = [
         [-wXOffset, wZOffsets[0]], [wXOffset, wZOffsets[0]], 
         [-wXOffset, wZOffsets[1]], [wXOffset, wZOffsets[1]]
@@ -1458,9 +2292,9 @@ export default function App() {
       });
 
       // 4. Symmetrical Headlights
-      const hZ = type === 'truck' ? 1.72 : 1.52;
-      const hY = type === 'truck' ? 0.65 : 0.45;
-      const hX = type === 'truck' ? 0.58 : 0.52;
+      const hZ = bodyGeo.parameters.depth / 2 + 0.02;
+      const hY = bodyMesh.position.y;
+      const hX = bodyGeo.parameters.width * 0.35;
       [[-hX, hY, hZ], [hX, hY, hZ]].forEach(([hx, hy, hz]) => {
         const bulb = new THREE.Mesh(
           new THREE.SphereGeometry(0.08, 6, 6),
@@ -1471,9 +2305,9 @@ export default function App() {
       });
 
       // 5. Red Tail lights
-      const tZ = type === 'truck' ? -1.72 : -1.52;
-      const tY = type === 'truck' ? 0.65 : 0.45;
-      const tX = type === 'truck' ? 0.58 : 0.52;
+      const tZ = -bodyGeo.parameters.depth / 2 - 0.02;
+      const tY = bodyMesh.position.y;
+      const tX = bodyGeo.parameters.width * 0.35;
       [[-tX, tY, tZ], [tX, tY, tZ]].forEach(([tx, ty, tz]) => {
         const bulb = new THREE.Mesh(
           new THREE.BoxGeometry(0.18, 0.08, 0.04),
@@ -1485,7 +2319,9 @@ export default function App() {
 
       // 6. Glowing underglow plane
       const glowGeo = new THREE.BoxGeometry(bodyGeo.parameters.width - 0.1, 0.03, bodyGeo.parameters.depth - 0.2);
-      const glowColor = type === 'sports' ? 0x00f0ff : (type === 'taxi' ? 0xffb703 : 0xff2ec4);
+      const glowColor = (type === 'sports' || type === 'supercar') 
+        ? 0x00f0ff 
+        : (type === 'taxi' ? 0xffb703 : (type === 'cybercab' ? 0x00ff88 : 0xff2ec4));
       const glowMat = new THREE.MeshBasicMaterial({ color: glowColor });
       const glow = new THREE.Mesh(glowGeo, glowMat);
       glow.position.y = 0.01;
@@ -1495,13 +2331,13 @@ export default function App() {
     };
 
     /* ---------- TRAFFIC AI VEHICLES POOL ---------- */
-    const TRAFFIC_COUNT = 8;
+    const TRAFFIC_COUNT = 10;
     const trafficPool: { 
       mesh: THREE.Group; 
       active: boolean; 
       lane: number; 
       speed: number; 
-      type: 'sedan' | 'sports' | 'truck' | 'taxi';
+      type: TrafficVehicleType;
       color: number;
     }[] = [];
 
@@ -1512,10 +2348,14 @@ export default function App() {
       0x7b2ff7, // Purple
       0x00ff66, // Green
       0xff3300, // Crimson Red
-      0xe0e0e0  // Silver
+      0xe0e0e0, // Silver
+      0x1a1a24, // Midnight Stealth
+      0xff6b00  // Neon Orange
     ];
 
-    const trafficTypes: ('sedan' | 'sports' | 'truck' | 'taxi')[] = ['sedan', 'sports', 'truck', 'taxi'];
+    const trafficTypes: TrafficVehicleType[] = [
+      'sedan', 'sports', 'truck', 'taxi', 'van', 'muscle', 'supercar', 'cybercab'
+    ];
 
     for (let i = 0; i < TRAFFIC_COUNT; i++) {
       const type = trafficTypes[i % trafficTypes.length];
@@ -1588,14 +2428,49 @@ export default function App() {
       });
     };
 
+    // Immediately spawn traffic cars on highway right from the start!
+    const spawnInitialTraffic = () => {
+      clearAllTraffic();
+
+      const initialCarPositions = [
+        { lane: 0, z: CAR_Z - 38, speed: 12 },
+        { lane: 2, z: CAR_Z - 70, speed: 14 },
+        { lane: 1, z: CAR_Z - 105, speed: 11 },
+        { lane: 0, z: CAR_Z - 145, speed: 13 },
+        { lane: 2, z: CAR_Z - 190, speed: 15 },
+        { lane: 1, z: CAR_Z - 235, speed: 12 },
+      ];
+
+      initialCarPositions.forEach((cfg, idx) => {
+        if (idx < trafficPool.length) {
+          const t = trafficPool[idx];
+          t.lane = cfg.lane;
+          t.speed = cfg.speed;
+          t.mesh.position.x = LANE_X[t.lane];
+          t.mesh.position.z = cfg.z;
+          t.mesh.visible = true;
+          t.active = true;
+        }
+      });
+    };
+
+    // Seed initial traffic ahead so highway looks active immediately
+    spawnInitialTraffic();
+
     /* ---------- ENGINE RUNTIME STATE ---------- */
     let activeSpeed = IDLE_SPEED;
     let activeScore = 0;
     let activeTimeElapsed = 0;
     let playerTargetLaneIndex = 1;
     let spawnCountdown = 0.0;
-    let currentSpawnInterval = 1.35;
-    let internalGameState: 'title' | 'playing' | 'gameover' = 'title';
+    let currentSpawnInterval = 1.25;
+    let internalGameState: 'title' | 'countdown' | 'playing' | 'gameover' = 'title';
+
+    // Speed boost state
+    let boostFuel = 100.0;
+    let boostRequested = false;
+    let boostActive = false;
+    let wasBoosting = false;
 
     // Screen shake variables for collision visual response
     let cameraShakeIntensity = 0.0;
@@ -1620,25 +2495,47 @@ export default function App() {
           // Base vehicle stats adjust velocity ramp limits
           const vehicle = activeVehicleRef.current;
           const currentMaxLimit = MAX_SPEED * vehicle.speedMultiplier;
+          const baseSpeedCalc = Math.min(currentMaxLimit, BASE_SPEED + activeTimeElapsed * SPEED_RAMP);
+
+          // Speed Boost calculation
+          if (boostRequested && boostFuel > 1.5) {
+            boostActive = true;
+            boostFuel = Math.max(0, boostFuel - dt * 26); // lasts ~3.8 seconds full burn
+            activeSpeed = baseSpeedCalc + 18.0; // Significant thrilling boost surge!
+            if (!wasBoosting) {
+              synth.playBoost();
+              wasBoosting = true;
+            }
+          } else {
+            boostActive = false;
+            wasBoosting = false;
+            boostFuel = Math.min(100, boostFuel + dt * 14); // recharges over ~7s
+            activeSpeed = baseSpeedCalc;
+          }
           
-          activeSpeed = Math.min(currentMaxLimit, BASE_SPEED + activeTimeElapsed * SPEED_RAMP);
-          
-          // Accumulate active score based on speed
-          activeScore += activeSpeed * dt * 1.2;
+          // Accumulate active score based on speed (boost multiplier rewards brave driving!)
+          const scoreMultiplier = boostActive ? 1.8 : 1.2;
+          activeScore += activeSpeed * dt * scoreMultiplier;
           setScore(Math.floor(activeScore));
           setSpeed(activeSpeed);
+          setBoostFuel(Math.round(boostFuel));
+          setIsBoosting(boostActive);
 
           // Update synthesized sound
           synth.updateEngine(activeSpeed);
 
           // Adjust spawn speed intervals
-          currentSpawnInterval = Math.max(0.6, 1.45 - activeTimeElapsed * 0.015);
+          currentSpawnInterval = Math.max(0.65, 1.35 - activeTimeElapsed * 0.015);
           spawnCountdown -= dt;
           if (spawnCountdown <= 0) {
             triggerTrafficSpawn();
             spawnCountdown = currentSpawnInterval;
           }
         }
+      } else if (internalGameState === 'countdown') {
+        // Countdown state: Vehicle is aligned on starting grid revving up
+        activeSpeed = 0;
+        setSpeed(0);
       } else if (internalGameState === 'gameover') {
         // Friction dampening decelerate
         activeSpeed *= 0.93;
@@ -1813,14 +2710,151 @@ export default function App() {
         // Calculate lateral speed velocity for roll rotation tilt effects
         const latSpeed = (carGroup.position.x - previousX) / Math.max(dt, 0.0001);
         carGroup.rotation.z += (-(latSpeed * 0.028) - carGroup.rotation.z) * 0.18;
+
+        // 3.1. Tactical Drift Smoke Particle Emission on Aggressive Steering / High Lateral Velocity
+        const isAggressiveSteer = Math.abs(latSpeed) > 3.6 && activeSpeed > 6 && internalGameState === 'playing';
+        if (isAggressiveSteer) {
+          if (clockTotalTime - lastDriftScreechTime > 0.22) {
+            synth.playTireScreech();
+            lastDriftScreechTime = clockTotalTime;
+          }
+
+          const isBmw = currentVehicle.id === 'bmw';
+          const tireOffsets = isBmw
+            ? [new THREE.Vector3(-0.86, 0.04, -1.15), new THREE.Vector3(0.86, 0.04, -1.15)]
+            : [new THREE.Vector3(-0.83, 0.04, -1.25), new THREE.Vector3(0.83, 0.04, -1.25)];
+
+          const underglowHex = currentVehicle.underglow;
+          const ugR = ((underglowHex >> 16) & 255) / 255;
+          const ugG = ((underglowHex >> 8) & 255) / 255;
+          const ugB = (underglowHex & 255) / 255;
+
+          tireOffsets.forEach((offset, idx) => {
+            const isOuterTire = (latSpeed > 0 && idx === 0) || (latSpeed < 0 && idx === 1);
+            const count = isOuterTire ? 3 : 2;
+
+            const worldTirePos = offset.clone();
+            carGroup.localToWorld(worldTirePos);
+
+            for (let k = 0; k < count; k++) {
+              const p = driftParticles[driftParticleIndex];
+              driftParticleIndex = (driftParticleIndex + 1) % MAX_DRIFT_PARTICLES;
+
+              p.active = true;
+              p.life = 0;
+              p.maxLife = 0.45 + Math.random() * 0.30;
+
+              p.pos.set(
+                worldTirePos.x + (Math.random() - 0.5) * 0.18,
+                0.04 + Math.random() * 0.06,
+                worldTirePos.z + (Math.random() - 0.5) * 0.2
+              );
+
+              const driftBackSpeed = activeSpeed * 0.94 + Math.random() * 3.0;
+              const driftSideSpeed = -latSpeed * 0.28 + (Math.random() - 0.5) * 1.6;
+              const driftUpSpeed = 0.25 + Math.random() * 0.45;
+
+              p.vel.set(driftSideSpeed, driftUpSpeed, driftBackSpeed);
+
+              p.baseR = 0.76 + ugR * 0.24;
+              p.baseG = 0.80 + ugG * 0.20;
+              p.baseB = 0.88 + ugB * 0.12;
+            }
+          });
+        }
         
-        // Hovering micro-bobbing animation
-        carGroup.position.y = 0.12 + Math.sin(clockTotalTime * 8) * 0.022;
+        // Hovering micro-bobbing animation & idling rev vibration during countdown
+        if (internalGameState === 'countdown') {
+          carGroup.position.y = 0.12 + Math.sin(clockTotalTime * 30) * 0.016;
+        } else {
+          carGroup.position.y = 0.12 + Math.sin(clockTotalTime * 8) * 0.022;
+        }
 
         // Spin tires slightly if playing/cruising
         wheelMeshes.forEach(wheel => {
           wheel.rotation.x += activeSpeed * dt * 0.35;
         });
+
+        // Dynamic nitro flame visuals
+        nitroFlameMeshes.forEach(flame => {
+          if (boostActive && !isPaused) {
+            flame.visible = true;
+            const flicker = 0.75 + Math.random() * 0.55;
+            flame.scale.set(1.3, 1.3 * flicker, 1.9 * flicker);
+            (flame.material as THREE.MeshBasicMaterial).color.setHex(
+              Math.random() > 0.4 ? 0x00f0ff : 0xff4500
+            );
+          } else {
+            flame.visible = false;
+          }
+        });
+
+        // Pulsing thruster point light on road
+        if (nitroThrustLight) {
+          if (boostActive && !isPaused) {
+            nitroThrustLight.intensity = 2.6 + Math.random() * 1.6;
+            nitroThrustLight.color.setHex(Math.random() > 0.35 ? 0x00f0ff : 0xff2ec4);
+          } else {
+            nitroThrustLight.intensity = 0;
+          }
+        }
+
+        // Emit dynamic particle system trails from the thruster nozzles
+        if (boostActive && !isPaused && internalGameState === 'playing') {
+          const isBmw = currentVehicle.id === 'bmw';
+          const nozzleLocalOffsets = isBmw
+            ? [new THREE.Vector3(-0.45, 0.18, -1.68), new THREE.Vector3(-0.35, 0.18, -1.68)]
+            : [new THREE.Vector3(-0.42, 0.28, -1.65), new THREE.Vector3(0.42, 0.28, -1.65)];
+
+          // Spawn multiple trail particles per nozzle per frame for a dense, continuous hyper-stream
+          const particlesPerNozzle = 4;
+          nozzleLocalOffsets.forEach(nozzleOffset => {
+            const worldNozzlePos = nozzleOffset.clone();
+            carGroup.localToWorld(worldNozzlePos);
+
+            for (let k = 0; k < particlesPerNozzle; k++) {
+              const p = nitroParticles[nitroParticleIndex];
+              nitroParticleIndex = (nitroParticleIndex + 1) % MAX_NITRO_PARTICLES;
+
+              p.active = true;
+              p.life = 0;
+              p.maxLife = 0.38 + Math.random() * 0.25;
+
+              // Position with slight turbulence near nozzle orifice
+              p.pos.set(
+                worldNozzlePos.x + (Math.random() - 0.5) * 0.1,
+                worldNozzlePos.y + (Math.random() - 0.5) * 0.1,
+                worldNozzlePos.z - Math.random() * 0.25
+              );
+
+              // Backwards ejection velocity + car relative speed + conical dispersion
+              const ejectionSpeed = activeSpeed + 18.0 + Math.random() * 15.0;
+              const spreadX = (Math.random() - 0.5) * 1.5;
+              const spreadY = (Math.random() - 0.5) * 1.2;
+
+              p.vel.set(spreadX, spreadY, ejectionSpeed);
+
+              // Color distribution: high-energy white/cyan core with magenta overdrive outer trail
+              const colRand = Math.random();
+              if (colRand > 0.45) {
+                // Electric Cyan
+                p.baseR = 0.0;
+                p.baseG = 0.94;
+                p.baseB = 1.0;
+              } else if (colRand > 0.15) {
+                // Hyper Magenta
+                p.baseR = 1.0;
+                p.baseG = 0.18;
+                p.baseB = 0.77;
+              } else {
+                // Intense White Core Spark
+                p.baseR = 1.0;
+                p.baseG = 0.98;
+                p.baseB = 0.92;
+              }
+            }
+          });
+        }
       }
 
       // 4. Camera control transitions
@@ -1831,24 +2865,100 @@ export default function App() {
         shakeOffsetY = (Math.random() - 0.5) * cameraShakeIntensity;
         cameraShakeIntensity *= 0.9; // damp
       }
+      if (boostActive && !isPaused) {
+        shakeOffsetX += (Math.random() - 0.5) * 0.05;
+        shakeOffsetY += (Math.random() - 0.5) * 0.04;
+      }
 
       // Third-person chase camera setup positioned behind and slightly above the player's car
       const targetCamX = carGroup.position.x * 0.92; 
-      const targetCamY = 1.85 + Math.sin(clockTotalTime * 3) * 0.01 + shakeOffsetY;
-      const targetCamZ = CAR_Z + 4.8;
+      const targetCamY = internalGameState === 'countdown'
+        ? 1.55 + Math.sin(clockTotalTime * 4) * 0.012
+        : 1.85 + Math.sin(clockTotalTime * 3) * 0.01 + shakeOffsetY;
+      const targetCamZ = internalGameState === 'countdown'
+        ? CAR_Z + 4.2
+        : CAR_Z + 4.8;
 
       camera.position.x += (targetCamX - camera.position.x) * 0.18;
       camera.position.x += shakeOffsetX;
       camera.position.y += (targetCamY - camera.position.y) * 0.18;
       camera.position.z += (targetCamZ - camera.position.z) * 0.18;
       
-      // Speed visual FOV warping
-      const targetFOV = 72 + (activeSpeed / MAX_SPEED) * 15;
+      // Speed visual FOV warping with boost expansion
+      const boostFOVBonus = boostActive ? 12 : 0;
+      const targetFOV = 72 + (activeSpeed / MAX_SPEED) * 15 + boostFOVBonus;
       camera.fov += (targetFOV - camera.fov) * 0.08;
       camera.updateProjectionMatrix();
 
       // Looking down the road ahead, slightly tracking player's lateral movement
       camera.lookAt(new THREE.Vector3(carGroup.position.x * 0.4, 0.55, CAR_Z - 35.0));
+
+      // Update and animate all active nitro particles trailing behind the car
+      for (let i = 0; i < MAX_NITRO_PARTICLES; i++) {
+        const p = nitroParticles[i];
+        if (p.active) {
+          if (!isPaused) {
+            p.life += dt;
+            if (p.life >= p.maxLife) {
+              p.active = false;
+              p.pos.set(0, -9999, 0);
+            } else {
+              // Integrate position
+              p.pos.x += p.vel.x * effectiveDt;
+              p.pos.y += p.vel.y * effectiveDt;
+              p.pos.z += p.vel.z * effectiveDt;
+
+              // Air resistance / thermal rise
+              p.vel.x *= 0.97;
+              p.vel.y += 0.35 * effectiveDt;
+            }
+          }
+
+          if (p.active) {
+            const lifeRatio = p.life / p.maxLife;
+            // Smooth bell-shaped or decaying brightness curve
+            const fade = Math.pow(Math.max(0, 1.0 - lifeRatio), 1.3);
+
+            // Dynamic color shift: bright core -> magenta/purple transition -> deep fading violet
+            let r = p.baseR;
+            let g = p.baseG;
+            let b = p.baseB;
+
+            if (lifeRatio > 0.35) {
+              const shift = (lifeRatio - 0.35) / 0.65;
+              // Shift towards violet / neon magenta at outer trail
+              r = r * (1 - shift) + 0.95 * shift;
+              g = g * (1 - shift) + 0.12 * shift;
+              b = b * (1 - shift) + 0.95 * shift;
+            }
+
+            nitroPositions[i * 3] = p.pos.x;
+            nitroPositions[i * 3 + 1] = p.pos.y;
+            nitroPositions[i * 3 + 2] = p.pos.z;
+
+            nitroColors[i * 3] = r * fade;
+            nitroColors[i * 3 + 1] = g * fade;
+            nitroColors[i * 3 + 2] = b * fade;
+          } else {
+            nitroPositions[i * 3] = 0;
+            nitroPositions[i * 3 + 1] = -9999;
+            nitroPositions[i * 3 + 2] = 0;
+            nitroColors[i * 3] = 0;
+            nitroColors[i * 3 + 1] = 0;
+            nitroColors[i * 3 + 2] = 0;
+          }
+        } else {
+          nitroPositions[i * 3] = 0;
+          nitroPositions[i * 3 + 1] = -9999;
+          nitroPositions[i * 3 + 2] = 0;
+          nitroColors[i * 3] = 0;
+          nitroColors[i * 3 + 1] = 0;
+          nitroColors[i * 3 + 2] = 0;
+        }
+      }
+
+      nitroPositionsAttr.needsUpdate = true;
+      nitroColorsAttr.needsUpdate = true;
 
       renderer.render(scene, camera);
     };
@@ -1862,6 +2972,47 @@ export default function App() {
       updateCarMaterials: (vehicle: Vehicle) => {
         buildActiveCar();
       },
+      prepareCountdown: () => {
+        internalGameState = 'countdown';
+        activeScore = 0;
+        activeSpeed = 0;
+        activeTimeElapsed = 0;
+        playerTargetLaneIndex = 1;
+        spawnCountdown = 0.0;
+        currentSpawnInterval = 1.25;
+        boostFuel = 100.0;
+        boostRequested = false;
+        boostActive = false;
+        wasBoosting = false;
+        setScore(0);
+        setSpeed(0);
+        setBoostFuel(100);
+        setIsBoosting(false);
+        carGroup.position.x = 0;
+        carGroup.rotation.z = 0;
+        resetNitroParticles();
+        spawnInitialTraffic();
+
+        // Reset dynamic train tracking
+        trainActive = false;
+        trainCooldown = 2.0;
+        if (trainGroup) {
+          trainGroup.visible = false;
+          trainGroup.position.set(-15, 0.1, -1000);
+        }
+
+        // Re-populate all segment sceneries to starting position values
+        roadSegments.forEach((seg, i) => {
+          seg.position.z = segmentStartZ - i * SEG_LEN;
+          const segmentDistance = CAR_Z - seg.position.z;
+          populateSceneryForSegment(seg, segmentDistance);
+        });
+      },
+      launchRace: () => {
+        internalGameState = 'playing';
+        activeSpeed = BASE_SPEED;
+        cameraShakeIntensity = 0.24;
+      },
       resetGame: () => {
         internalGameState = 'playing';
         activeScore = 0;
@@ -1869,10 +3020,19 @@ export default function App() {
         activeTimeElapsed = 0;
         playerTargetLaneIndex = 1;
         spawnCountdown = 0.0;
-        currentSpawnInterval = 1.35;
+        currentSpawnInterval = 1.25;
+        boostFuel = 100.0;
+        boostRequested = false;
+        boostActive = false;
+        wasBoosting = false;
+        setScore(0);
+        setSpeed(BASE_SPEED);
+        setBoostFuel(100);
+        setIsBoosting(false);
         carGroup.position.x = 0;
         carGroup.rotation.z = 0;
-        clearAllTraffic();
+        resetNitroParticles();
+        spawnInitialTraffic();
 
         // Reset dynamic train tracking
         trainActive = false;
@@ -1899,7 +3059,10 @@ export default function App() {
         playerTargetLaneIndex = Math.min(2, playerTargetLaneIndex + 1);
         synth.playShift();
       },
-      setExternalState: (state: 'title' | 'playing' | 'gameover') => {
+      setBoost: (active: boolean) => {
+        boostRequested = active;
+      },
+      setExternalState: (state: 'title' | 'countdown' | 'playing' | 'gameover') => {
         internalGameState = state;
       }
     };
@@ -1912,6 +3075,9 @@ export default function App() {
       if (['ArrowRight', 'KeyD'].includes(e.code)) {
         gameLoopRef.current?.changeLaneRight();
       }
+      if (['ArrowUp', 'KeyW', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
+        gameLoopRef.current?.setBoost(true);
+      }
       if (['KeyP', 'Pause'].includes(e.code)) {
         if (internalGameState === 'playing') {
           setPaused(p => !p);
@@ -1919,21 +3085,32 @@ export default function App() {
       }
       if (['Space', 'Enter'].includes(e.code)) {
         if (internalGameState === 'title' || internalGameState === 'gameover') {
-          startGame();
+          startRaceCountdownRef.current?.();
         } else if (internalGameState === 'playing') {
-          // Space bar pauses when playing
-          setPaused(p => !p);
+          if (e.code === 'Space') {
+            gameLoopRef.current?.setBoost(true);
+          }
         }
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'KeyW', 'ShiftLeft', 'ShiftRight', 'Space'].includes(e.code)) {
+        gameLoopRef.current?.setBoost(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
     // CLEANUP DISPOSAL
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
       resizeObserver.disconnect();
       cancelAnimationFrame(requestID);
+      nitroGeo.dispose();
+      nitroPointsMat.dispose();
       renderer.dispose();
       synth.stopEngine();
     };
@@ -1945,32 +3122,6 @@ export default function App() {
       gameLoopRef.current.setExternalState(gameState);
     }
   }, [gameState]);
-
-  // Handle active leaderboards update
-  useEffect(() => {
-    // Dynamic insert of current player score or high score
-    const players = [
-      { name: 'HYPER_V', score: 142092 },
-      { name: 'NULL_POINTER', score: 128440 },
-      { name: 'GHOST_SHELL', score: 115201 },
-      { name: 'DATA_DRIFT', score: 98332 },
-      { name: 'CYBER_PUNK', score: 87110 }
-    ];
-
-    const playerScore = Math.max(score, highScore);
-    const existingPlayerIndex = players.findIndex(p => p.name === username);
-    
-    if (existingPlayerIndex !== -1) {
-      players[existingPlayerIndex].score = playerScore;
-    } else if (playerScore > 0) {
-      players.push({ name: username, score: playerScore });
-    }
-
-    // Sort descending
-    players.sort((a, b) => b.score - a.score);
-    // Take top 5
-    setLeaderboard(players.slice(0, 5));
-  }, [score, highScore, username]);
 
   const activeVehicle = VEHICLES.find(v => v.id === selectedVehicleId) || VEHICLES[0];
   const progressToObjective = Math.min(100, Math.floor((dodgeCount / 15) * 100));
@@ -1990,8 +3141,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* System tabs (Simulated protocols) */}
-        <div className="hidden md:flex gap-8 text-xs font-semibold tracking-wider uppercase font-rajdhani">
+        {/* System tabs */}
+        <div className="hidden md:flex gap-6 text-xs font-semibold tracking-wider uppercase font-rajdhani items-center">
           <div className="text-[#00f0ff] border-b-2 border-[#00f0ff] pb-1 cursor-pointer flex items-center gap-1.5">
             <Compass className="w-3.5 h-3.5 animate-spin-slow text-[#00f0ff]" />
             <span>The Grid</span>
@@ -2003,17 +3154,26 @@ export default function App() {
             <Cpu className="w-3.5 h-3.5" />
             <span>Garage</span>
           </div>
-          <div className="text-white/60 hover:text-[#00f0ff] transition-colors cursor-pointer flex items-center gap-1.5" onClick={() => {
-            const container = document.getElementById('leaderboard-section');
-            container?.scrollIntoView({ behavior: 'smooth' });
-          }}>
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Leaderboard</span>
-          </div>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="px-2.5 py-1 rounded bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 border border-[#00f0ff]/40 text-[#00f0ff] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px]"
+            title="How to Play"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>How to Play</span>
+          </button>
         </div>
 
-        {/* Audio Sync & Profile CodeName */}
-        <div className="flex items-center gap-5">
+        {/* Audio Sync, Help Mobile & Profile CodeName */}
+        <div className="flex items-center gap-3 sm:gap-5">
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="md:hidden p-1.5 rounded bg-white/5 border border-white/10 hover:border-[#00f0ff]/50 text-white/70 hover:text-[#00f0ff] transition-all cursor-pointer flex items-center justify-center"
+            title="How to Play"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
           <button 
             className="p-1.5 rounded bg-white/5 border border-white/10 hover:border-[#00f0ff]/50 text-white/70 hover:text-[#00f0ff] transition-all cursor-pointer flex items-center justify-center" 
             onClick={() => setMuted(!muted)}
@@ -2071,73 +3231,8 @@ export default function App() {
       {/* ---------- MAIN GRID BODY ---------- */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0" id="main-content">
         
-        {/* LEFT COLUMN: GLOBAL LEADERBOARD & PROTOCOL OBJECTIVES */}
-        <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-[#00f0ff]/10 bg-[#07070f]/75 p-5 flex flex-col shrink-0 overflow-y-auto" id="leaderboard-section">
-          <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-2">
-            <Trophy className="w-4 h-4 text-[#00f0ff]" />
-            <h3 className="text-xs font-bold text-[#00f0ff] tracking-[0.2em] uppercase font-orbitron">Top Seekers</h3>
-          </div>
-          
-          <div className="space-y-3 flex-1 min-h-[140px]">
-            {leaderboard.map((item, index) => {
-              const isCurrentUser = item.name === username;
-              return (
-                <div 
-                  key={`${item.name}-${index}`}
-                  className={`flex items-center justify-between p-2.5 rounded transition-all ${
-                    isCurrentUser 
-                      ? 'bg-[#ff2ec4]/10 border-l-3 border-[#ff2ec4] shadow-[0_0_12px_rgba(255,46,196,0.15)] text-white' 
-                      : 'bg-white/5 border-l-2 border-[#00f0ff]/40 opacity-80 hover:opacity-100 hover:bg-white/10'
-                  }`}
-                  id={`leaderboard-item-${index}`}
-                >
-                  <div className="flex items-center gap-2 font-mono">
-                    <span className="text-[10px] text-white/40">{String(index + 1).padStart(2, '0')}.</span>
-                    <span className="text-xs font-semibold tracking-wider">{item.name}</span>
-                  </div>
-                  <span className={`text-xs font-mono font-bold ${isCurrentUser ? 'text-[#ff2ec4]' : 'text-[#00f0ff]'}`}>
-                    {item.score.toLocaleString()}M
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Daily Objective Progress */}
-          <div className="mt-5 border-t border-white/5 pt-4">
-            <div className="p-4 rounded border border-dashed border-[#00f0ff]/20 bg-[#12121f]/45">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-[#00f0ff] font-orbitron uppercase tracking-widest flex items-center gap-1">
-                  <Target className="w-3 h-3 text-[#00f0ff]" /> Daily Objective
-                </span>
-                <span className="text-[10px] text-[#ffb703] font-mono">{dodgeCount}/15</span>
-              </div>
-              <p className="text-xs text-white/70 leading-relaxed mb-3">
-                Dodge 15 debris obstacle signatures without a grid system overload.
-              </p>
-              
-              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden relative">
-                <div 
-                  className="h-full bg-gradient-to-r from-[#00f0ff] to-[#ff2ec4] transition-all duration-300 rounded-full"
-                  style={{ width: `${progressToObjective}%` }}
-                ></div>
-              </div>
-              
-              {progressToObjective >= 100 ? (
-                <div className="mt-2.5 text-[10px] font-bold text-green-400 flex items-center gap-1.5 animate-bounce">
-                  <Award className="w-3.5 h-3.5" /> SECURE GRID CLEARED (+500 XP)
-                </div>
-              ) : (
-                <div className="mt-1.5 text-[9px] text-white/40 font-mono text-right">
-                  REWARD: OVERCLOCKED CORES
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
-
         {/* CENTER COLUMN: ACTIVE 3D GAMEPLAY VIEW */}
-        <section className="flex-1 relative p-4 sm:p-6 lg:p-8 flex flex-col min-w-0" id="gameplay-viewport">
+        <section className="flex-1 relative p-3 sm:p-5 lg:p-6 flex flex-col min-w-0" id="gameplay-viewport">
           <div 
             ref={containerRef}
             className="w-full h-full rounded-xl border border-[#00f0ff]/20 bg-gradient-to-b from-[#12121f] to-[#05050b] relative overflow-hidden flex flex-col shadow-[inset_0_0_40px_rgba(0,240,255,0.06)]"
@@ -2147,178 +3242,379 @@ export default function App() {
             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" id="gameCanvas" />
 
             {/* --- IN-GAME OVERLAY STATS / HUD --- */}
-            <div className={`absolute inset-x-0 top-0 p-5 pointer-events-none flex justify-between items-start font-orbitron transition-all duration-300 ${gameState === 'playing' ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="flex items-center gap-4 pointer-events-auto" id="hud-score-display">
-                <button 
-                  onClick={() => setPaused(!paused)}
-                  className="w-10 h-10 rounded-full bg-black/75 border border-[#00f0ff]/30 text-[#00f0ff] hover:text-white hover:border-white transition-all flex items-center justify-center cursor-pointer pointer-events-auto shadow-[0_0_10px_rgba(0,240,255,0.25)]"
-                  title={paused ? "Resume Drive" : "Pause Drive"}
-                  id="hud-pause-btn"
+            <div className={`absolute inset-x-0 top-0 p-3 sm:p-5 pointer-events-none flex flex-col gap-3 font-orbitron transition-all duration-300 ${gameState === 'playing' ? 'opacity-100' : 'opacity-0'}`}>
+              
+              {/* Top Row: Distance & Pause, Center Nitro Status, Right: Speed & Score */}
+              <div className="flex justify-between items-start w-full">
+                {/* Distance & Pause */}
+                <div 
+                  key={gameState === 'playing' ? 'hud-score-active' : 'hud-score-idle'}
+                  className={`flex items-center gap-2 sm:gap-3 pointer-events-auto ${gameState === 'playing' ? 'animate-hud-slide-left' : ''}`} 
+                  id="hud-score-display"
                 >
-                  {paused ? <Play className="w-5 h-5 fill-current" /> : <Pause className="w-5 h-5 fill-current" />}
-                </button>
-                <div className="flex flex-col justify-center">
-                  <div className="text-[9px] tracking-[0.2em] text-[#00f0ff]/80 uppercase font-mono">DISTANCE</div>
-                  <div className="text-2xl font-black text-white drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">
-                    {score} <span className="text-xs font-bold text-white/60">m</span>
+                  <button 
+                    onClick={() => setPaused(!paused)}
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/85 border border-[#00f0ff]/40 text-[#00f0ff] hover:text-white hover:border-white transition-all flex items-center justify-center cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95"
+                    title={paused ? "Resume Drive (P)" : "Pause Drive (P)"}
+                    id="hud-pause-btn"
+                  >
+                    {paused ? <Play className="w-5 h-5 fill-current" /> : <Pause className="w-5 h-5 fill-current" />}
+                  </button>
+                  <div className={`px-3 py-1.5 rounded-xl bg-black/80 border border-[#00f0ff]/30 shadow-[0_0_10px_rgba(0,240,255,0.15)] flex flex-col justify-center ${score % 100 < 15 && score > 20 ? 'animate-hud-vibrate-subtle' : ''}`}>
+                    <div className="text-[9px] tracking-[0.2em] text-[#00f0ff]/90 uppercase font-mono flex items-center gap-1">
+                      <Compass className="w-3 h-3 text-[#00f0ff]" /> DISTANCE
+                    </div>
+                    <div className="text-xl sm:text-2xl font-black text-white drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] leading-none mt-0.5">
+                      {score} <span className="text-xs font-bold text-white/60">m</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col items-end text-right" id="hud-speed-display">
-                <div className="text-[9px] tracking-[0.2em] text-[#ff2ec4]/80 uppercase font-mono">SCORE</div>
-                <div className="text-2xl font-black text-white drop-shadow-[0_0_10px_rgba(255,46,196,0.5)] leading-none">
-                  {Math.round(score * 12.5)}
+                {/* Center: Live Nitro Status / Overdrive indicator */}
+                <div 
+                  key={gameState === 'playing' ? 'hud-nitro-active' : 'hud-nitro-idle'}
+                  className={`hidden sm:flex flex-col items-center ${gameState === 'playing' ? 'animate-hud-slide-top' : ''}`}
+                >
+                  <div className={`px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all flex items-center gap-2 ${
+                    isBoosting 
+                      ? 'bg-[#ff2ec4]/30 border-[#ff2ec4] text-white shadow-[0_0_20px_rgba(255,46,196,0.8)] animate-hud-vibrate-intense animate-speed-pulse'
+                      : boostFuel > 20
+                        ? 'bg-black/75 border-[#00f0ff]/40 text-[#00f0ff]'
+                        : 'bg-black/75 border-amber-500/40 text-amber-400'
+                  }`}>
+                    <Flame className={`w-4 h-4 ${isBoosting ? 'text-white animate-bounce' : 'text-[#00f0ff]'}`} />
+                    <span className="font-bold">{isBoosting ? '⚡ NITRO ACTIVE (+80% SCORE)' : `NITRO FUEL: ${boostFuel}% (HOLD W / ↑)`}</span>
+                  </div>
                 </div>
-                
-                {/* Speed right below score in red/orange */}
-                <div className="text-[9px] tracking-[0.15em] text-[#ff3300]/80 uppercase font-mono mt-2">SPEED</div>
-                <div className="text-lg font-black text-[#ff4500] drop-shadow-[0_0_8px_rgba(255,69,0,0.5)] leading-none">
-                  {Math.round(speed * 6.5)} <span className="text-xs font-bold text-white">KM/H</span>
+
+                {/* Right: Speed & Score with subtle vibrating / pulsing animations */}
+                <div 
+                  key={gameState === 'playing' ? 'hud-speed-active' : 'hud-speed-idle'}
+                  className={`${gameState === 'playing' ? 'animate-hud-slide-right' : ''}`}
+                >
+                  <div 
+                    className={`flex flex-col items-center px-3 sm:px-4 py-2.5 rounded-2xl bg-black/90 border transition-all duration-150 pointer-events-auto shadow-[0_0_20px_rgba(0,0,0,0.6)] ${
+                      isBoosting 
+                        ? 'animate-hud-vibrate-intense animate-speed-pulse border-[#ff2ec4] bg-[#ff2ec4]/15 shadow-[0_0_30px_rgba(255,46,196,0.5)]'
+                        : Math.round(speed * 6.5) > 180 
+                          ? 'animate-hud-vibrate-intense border-[#ff4500] bg-[#ff4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.4)]'
+                          : Math.round(speed * 6.5) > 120 
+                            ? 'animate-hud-vibrate-subtle border-[#ffb703]/70 bg-[#ffb703]/10 shadow-[0_0_15px_rgba(255,183,3,0.25)]'
+                            : 'border-[#00f0ff]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]'
+                    }`} 
+                    id="hud-speed-display"
+                  >
+                    {/* Header Score Display */}
+                    <div className="flex items-center justify-between w-full gap-3 pb-1 border-b border-white/10 mb-1">
+                      <div className="text-[9px] tracking-[0.2em] text-[#ff2ec4] uppercase font-mono flex items-center gap-1">
+                        <Trophy className="w-3 h-3 text-[#ff2ec4]" /> SCORE
+                      </div>
+                      <div className="text-sm sm:text-base font-black text-white drop-shadow-[0_0_10px_rgba(255,46,196,0.6)] leading-none font-orbitron">
+                        {Math.round(score * 12.5).toLocaleString()}
+                      </div>
+                    </div>
+
+                    {/* SVG Circular Radial Speedometer Gauge */}
+                    <SpeedRadialGauge speed={speed} isBoosting={isBoosting} />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* --- OVERLAY: PAUSED SCREEN --- */}
-            {paused && gameState === 'playing' && (
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-20 pointer-events-auto" id="paused-screen-overlay">
-                <div className="max-w-md animate-fade-in">
-                  <h2 className="text-5xl font-black italic tracking-tighter text-[#00f0ff] font-orbitron drop-shadow-[0_0_20px_rgba(0,240,255,0.8)] animate-pulse">
-                    SYSTEM PAUSED
-                  </h2>
-                  <p className="mt-2 text-white/70 uppercase tracking-[0.25em] text-xs font-semibold">
-                    NEURAL GRID HOVERING
-                  </p>
-                  
-                  <div className="mt-6 p-4 rounded bg-[#07070f]/95 border border-[#00f0ff]/30 text-xs text-white/80 space-y-3 font-rajdhani">
-                    <p className="text-xs">SYSTEM CHASSIS TEMPERATURE STATUS: STABLE</p>
-                    <div className="flex justify-center items-center gap-2">
-                      <kbd className="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono text-[10px]">SPACE</kbd>
-                      <span className="text-white/40">or</span>
-                      <kbd className="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono text-[10px]">P</kbd>
-                      <span className="text-white/60">to resume</span>
-                    </div>
-                  </div>
+            {/* --- OVERLAY: STARTING RACE COUNTDOWN ANIMATION --- */}
+            {gameState === 'countdown' && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center pointer-events-none z-30 select-none animate-fade-in" id="starting-countdown-overlay">
+                {/* 3-Gantry Starting Lights */}
+                <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-[#07070f]/90 border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.8)] mb-6">
+                  {/* Light 1: Red / Ready */}
+                  <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 transition-all duration-200 ${
+                    countdownVal === '3' || countdownVal === '2' || countdownVal === '1' || countdownVal === 'GO!'
+                      ? 'bg-red-500 border-red-300 shadow-[0_0_22px_#ef4444] animate-beacon-glow'
+                      : 'bg-red-950/40 border-red-900/50 opacity-30'
+                  }`}></div>
 
-                  <button 
-                    onClick={() => setPaused(false)}
-                    className="mt-8 px-10 py-3 bg-white text-black font-black rounded-full hover:scale-105 transition-all shadow-[0_0_25px_rgba(255,255,255,0.45)] cursor-pointer text-sm font-orbitron tracking-widest"
-                  >
-                    RESUME DRIVE
-                  </button>
+                  {/* Light 2: Amber / Set */}
+                  <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 transition-all duration-200 ${
+                    countdownVal === '2' || countdownVal === '1' || countdownVal === 'GO!'
+                      ? 'bg-amber-400 border-amber-200 shadow-[0_0_22px_#f59e0b] animate-beacon-glow'
+                      : 'bg-amber-950/40 border-amber-900/50 opacity-30'
+                  }`}></div>
+
+                  {/* Light 3: Green/Cyan / Go */}
+                  <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 transition-all duration-200 ${
+                    countdownVal === '1' || countdownVal === 'GO!'
+                      ? 'bg-[#00f0ff] border-cyan-200 shadow-[0_0_28px_#00f0ff] animate-beacon-glow'
+                      : 'bg-cyan-950/40 border-cyan-900/50 opacity-30'
+                  }`}></div>
+                </div>
+
+                {/* Big Animated Countdown Digits */}
+                <div key={countdownVal} className="flex flex-col items-center animate-countdown-pop">
+                  <div className={`text-8xl sm:text-9xl font-black italic font-orbitron tracking-tight drop-shadow-[0_0_40px_rgba(0,240,255,0.9)] ${
+                    countdownVal === 'GO!'
+                      ? 'text-[#00f0ff] drop-shadow-[0_0_60px_#00f0ff]'
+                      : countdownVal === '1'
+                        ? 'text-[#ffb703]'
+                        : countdownVal === '2'
+                          ? 'text-[#ff2ec4]'
+                          : 'text-white'
+                  }`}>
+                    {countdownVal}
+                  </div>
+                  <div className="mt-2 text-lg sm:text-2xl font-black font-orbitron tracking-[0.3em] uppercase text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.6)]">
+                    {countdownSubtext}
+                  </div>
+                </div>
+
+                {/* Quick Reminder */}
+                <div className="mt-8 px-5 py-2.5 rounded-xl bg-black/75 border border-[#00f0ff]/30 text-white/80 text-xs font-mono tracking-wider flex items-center gap-3">
+                  <span>Steer: <strong>A / D or ← / →</strong></span>
+                  <span className="text-white/30">•</span>
+                  <span>Nitro Boost: <strong>Hold W / ↑ / Space</strong></span>
                 </div>
               </div>
             )}
 
-            {/* --- OVERLAY: TITLE SCREEN --- */}
-            {gameState === 'title' && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-10" id="title-screen-overlay">
-                <div className="max-w-md">
-                  <h1 className="text-5xl sm:text-6xl font-black italic tracking-tighter text-white font-orbitron drop-shadow-[0_0_25px_rgba(255,46,196,0.9)] animate-pulse">
-                    NEON RUSH
-                  </h1>
-                  <p className="mt-2 text-[#00f0ff] tracking-[0.35em] uppercase text-xs sm:text-sm font-semibold font-orbitron">
-                    NEURAL CONNECTION SYNCED
+            {/* --- OVERLAY: PAUSED SCREEN --- */}
+            {paused && gameState === 'playing' && (
+              <div className="absolute inset-0 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-20 pointer-events-auto" id="paused-screen-overlay">
+                <div className="max-w-md w-full animate-fade-in bg-[#07070f]/95 border border-[#00f0ff]/30 p-6 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+                  <h2 className="text-4xl sm:text-5xl font-black italic tracking-tighter text-[#00f0ff] font-orbitron drop-shadow-[0_0_20px_rgba(0,240,255,0.8)] animate-pulse">
+                    RACE PAUSED
+                  </h2>
+                  <p className="mt-1 text-white/70 uppercase tracking-[0.2em] text-xs font-semibold font-rajdhani">
+                    ENGINE IDLING
                   </p>
-                  
-                  <div className="mt-6 p-4 rounded bg-[#07070f]/90 border border-[#00f0ff]/20 text-xs text-white/80 space-y-2.5 font-rajdhani">
-                    <p className="text-sm font-semibold text-[#ff2ec4]">CONTROLS INTERACTIVE PROTOCOL:</p>
-                    <div className="flex justify-center items-center gap-4 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <kbd className="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono text-xs">←</kbd>
-                        <kbd className="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono text-xs">→</kbd>
-                        <span className="text-white/60">or</span>
-                        <kbd className="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono text-xs">A</kbd>
-                        <kbd className="px-2 py-1 bg-white/10 rounded border border-white/20 font-mono text-xs">D</kbd>
-                      </div>
-                      <span className="text-[#00f0ff]">/</span>
-                      <span className="text-white/70">Tap On-Screen Arrows Below</span>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-center">
+                    <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                      <div className="text-[10px] text-white/50 uppercase font-mono">Distance</div>
+                      <div className="text-xl font-bold text-white font-orbitron">{score} M</div>
                     </div>
-                    <p className="opacity-80">
-                      Weave through obstacle cores. The neural speed grid accelerates permanently. Stay synced.
+                    <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                      <div className="text-[10px] text-white/50 uppercase font-mono">Current Speed</div>
+                      <div className="text-xl font-bold text-[#ff4500] font-orbitron">{Math.round(speed * 6.5)} KM/H</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-5 flex flex-col gap-2.5">
+                    <button 
+                      onClick={() => setPaused(false)}
+                      className="w-full py-3.5 bg-gradient-to-r from-[#00f0ff] to-[#ff2ec4] text-black font-black rounded-xl hover:scale-102 transition-all shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer text-sm font-orbitron tracking-widest flex items-center justify-center gap-2"
+                    >
+                      <Play className="w-4 h-4 fill-current" /> RESUME DRIVE
+                    </button>
+                    <button 
+                      onClick={restartGame}
+                      className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl transition-all cursor-pointer text-xs font-orbitron tracking-wider flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> RESTART RACE
+                    </button>
+                    <button 
+                      onClick={() => setShowHelpModal(true)}
+                      className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-[#00f0ff] rounded-xl transition-all cursor-pointer text-xs font-mono flex items-center justify-center gap-1.5"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5" /> Game Guide
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- OVERLAY: TITLE SCREEN (USER FRIENDLY & EASY TO UNDERSTAND) --- */}
+            {gameState === 'title' && (
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10 overflow-y-auto" id="title-screen-overlay">
+                <div className="max-w-xl w-full my-auto">
+                  {/* Title & Tagline */}
+                  <div className="inline-block px-3 py-1 rounded-full bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] text-[10px] sm:text-xs font-mono tracking-widest uppercase mb-2">
+                    🚗 3D HIGHWAY TRAFFIC RACER
+                  </div>
+                  <h1 className="text-4xl sm:text-6xl font-black italic tracking-tighter text-white font-orbitron drop-shadow-[0_0_25px_rgba(255,46,196,0.9)] animate-pulse">
+                    NEON RUSH 3D
+                  </h1>
+                  
+                  {/* Concept Card: Immediate explanation of what the game is */}
+                  <div className="mt-4 p-4 rounded-xl bg-[#07070f]/90 border border-[#00f0ff]/30 text-left shadow-[0_0_20px_rgba(0,240,255,0.15)]">
+                    <p className="text-sm font-semibold text-white leading-relaxed font-rajdhani">
+                      <strong className="text-[#00f0ff]">Objective:</strong> Live traffic cars are on the highway from the start! Steer across 3 lanes, dodge slower commuters and fast overtaking cars, and trigger your <strong className="text-[#ff2ec4]">Nitro Boost</strong> to rack up high speeds and achieve the maximum distance!
                     </p>
+                    
+                    {/* 3 Steps Visual Guide */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-3 pt-3 border-t border-white/10">
+                      <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-center">
+                        <div className="text-[#00f0ff] text-base font-bold font-orbitron flex items-center justify-center gap-1">
+                          <ArrowLeft className="w-3.5 h-3.5" /> STEER <ArrowRight className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="text-[11px] text-white font-medium mt-1">Change Lanes Left / Right</div>
+                        <div className="text-[10px] text-white/50 font-mono mt-0.5">A / D or ← / →</div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-white/5 border border-[#ff2ec4]/30 text-center">
+                        <div className="text-[#ff2ec4] text-base font-bold font-orbitron flex items-center justify-center gap-1">
+                          <Flame className="w-4 h-4" /> BOOST
+                        </div>
+                        <div className="text-[11px] text-white font-medium mt-1">Nitro Speed Boost</div>
+                        <div className="text-[10px] text-white/50 font-mono mt-0.5">Hold W / ↑ / Space</div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-white/5 border border-amber-400/30 text-center">
+                        <div className="text-amber-400 text-base font-bold font-orbitron flex items-center justify-center gap-1">
+                          <Shield className="w-4 h-4" /> SURVIVE
+                        </div>
+                        <div className="text-[11px] text-white font-medium mt-1">Dodge All Traffic</div>
+                        <div className="text-[10px] text-white/50 font-mono mt-0.5">Crash = Game Over</div>
+                      </div>
+                    </div>
                   </div>
 
                   {highScore > 0 && (
-                    <div className="mt-5 text-[#ffb703] font-orbitron text-xs tracking-widest animate-pulse">
-                      BEST RECORDED DEVIATION: {highScore}M
+                    <div className="mt-4 text-[#ffb703] font-orbitron text-xs sm:text-sm tracking-widest flex items-center justify-center gap-1.5 font-bold">
+                      <Trophy className="w-4 h-4" /> BEST DISTANCE RECORD: {highScore}M
                     </div>
                   )}
 
-                  <button 
-                    onClick={startGame}
-                    className="mt-8 px-12 py-4 bg-white text-[#05050b] font-black rounded-full hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,255,255,0.45)] cursor-pointer text-sm sm:text-base font-orbitron tracking-widest"
-                    id="btn-engage-engine"
-                  >
-                    ENGAGE ENGINE
-                  </button>
+                  {/* Primary Big Start Button */}
+                  <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center items-center">
+                    <button 
+                      onClick={startGame}
+                      className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-[#00f0ff] via-white to-[#ff2ec4] text-black font-black rounded-full hover:scale-105 transition-all shadow-[0_0_35px_rgba(0,240,255,0.6)] cursor-pointer text-base font-orbitron tracking-widest flex items-center justify-center gap-2"
+                      id="btn-engage-engine"
+                    >
+                      <Play className="w-5 h-5 fill-current" /> START RACE
+                    </button>
+                    <button 
+                      onClick={() => setShowHelpModal(true)}
+                      className="w-full sm:w-auto px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold rounded-full transition-all cursor-pointer text-xs font-orbitron tracking-wider flex items-center justify-center gap-1.5"
+                    >
+                      <HelpCircle className="w-4 h-4 text-[#00f0ff]" /> HOW TO PLAY
+                    </button>
+                  </div>
+                  <p className="mt-2 text-white/40 text-[11px] font-mono">
+                    [ You can also press ENTER or SPACE on your keyboard to play ]
+                  </p>
                 </div>
               </div>
             )}
 
             {/* --- OVERLAY: GAME OVER SCREEN --- */}
             {gameState === 'gameover' && (
-              <div className="absolute inset-0 bg-[#05050b]/85 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-10" id="gameover-screen-overlay">
-                <div className="max-w-md animate-fade-in">
-                  <h2 className="text-4xl sm:text-5xl font-black italic tracking-tighter text-[#ff2ec4] font-orbitron drop-shadow-[0_0_20px_rgba(255,46,196,0.95)]">
-                    CRASH DETECTED
+              <div className="absolute inset-0 bg-[#05050b]/90 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-10" id="gameover-screen-overlay">
+                <div className="max-w-md w-full animate-fade-in bg-[#07070f]/95 border border-[#ff2ec4]/40 p-6 rounded-2xl shadow-[0_0_30px_rgba(255,46,196,0.3)]">
+                  <h2 className="text-3xl sm:text-5xl font-black italic tracking-tighter text-[#ff2ec4] font-orbitron drop-shadow-[0_0_20px_rgba(255,46,196,0.95)]">
+                    CRASH DETECTED!
                   </h2>
-                  <p className="mt-1 text-[#ffb703] tracking-[0.2em] uppercase text-xs font-bold font-orbitron">
-                    NEURAL PROTOCOL DISCONNECTED
+                  <p className="mt-1 text-[#ffb703] tracking-[0.2em] uppercase text-xs font-bold font-rajdhani">
+                    VEHICLE COLLISION
                   </p>
 
-                  <div className="mt-6 p-6 rounded bg-[#07070f]/95 border border-[#ff2ec4]/30 relative">
+                  <div className="mt-5 p-5 rounded-xl bg-black/60 border border-white/10 relative">
                     <div className="text-[11px] text-[#00f0ff] uppercase tracking-widest font-mono">Distance Traveled</div>
                     <div className="text-4xl font-black text-white font-orbitron mt-1 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
                       {score} M
                     </div>
                     
                     {score >= highScore && score > 0 && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#ffb703] to-[#ff2ec4] text-black text-[10px] font-black px-3 py-1 rounded-full font-orbitron tracking-widest border border-black animate-bounce shadow-[0_0_15px_rgba(255,183,3,0.5)]">
-                        NEW BEST RECORD
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#ffb703] to-[#ff2ec4] text-black text-[10px] font-black px-3.5 py-1 rounded-full font-orbitron tracking-widest border border-black animate-bounce shadow-[0_0_15px_rgba(255,183,3,0.5)]">
+                        🏆 NEW BEST RECORD!
                       </span>
                     )}
 
-                    <div className="mt-4 pt-4 border-t border-white/5 flex justify-between text-xs text-white/50 font-mono">
-                      <span>Callsign: <strong className="text-white">{username}</strong></span>
-                      <span>Best Score: <strong className="text-[#ffb703]">{highScore}M</strong></span>
+                    <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/10 text-xs font-mono">
+                      <div className="text-left text-white/60">
+                        Cars Dodged: <strong className="text-[#00f0ff]">{dodgeCount}</strong>
+                      </div>
+                      <div className="text-right text-white/60">
+                        Best Score: <strong className="text-[#ffb703]">{highScore}M</strong>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mt-6">
                     <button 
                       onClick={restartGame}
-                      className="w-full sm:w-auto px-10 py-3.5 bg-gradient-to-r from-[#00f0ff] to-[#ff2ec4] text-black font-black rounded-full hover:scale-105 transition-all shadow-[0_0_25px_rgba(0,240,255,0.45)] cursor-pointer text-sm font-orbitron tracking-widest"
+                      className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#00f0ff] to-[#ff2ec4] text-black font-black rounded-full hover:scale-105 transition-all shadow-[0_0_25px_rgba(0,240,255,0.5)] cursor-pointer text-sm font-orbitron tracking-widest flex items-center justify-center gap-2"
                       id="btn-re-engage"
                     >
-                      RE-ENGAGE SYSTEM
+                      <RotateCcw className="w-4 h-4" /> PLAY AGAIN
                     </button>
                     <button 
                       onClick={() => setGameState('title')}
-                      className="w-full sm:w-auto px-8 py-3.5 bg-white/10 border border-white/20 text-white font-semibold rounded-full hover:bg-white/20 transition-all cursor-pointer text-sm font-orbitron tracking-wider"
+                      className="w-full sm:w-auto px-6 py-3.5 bg-white/10 border border-white/20 text-white font-semibold rounded-full hover:bg-white/20 transition-all cursor-pointer text-xs font-orbitron tracking-wider"
                     >
-                      QUIT TO GRID
+                      MAIN MENU
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* --- MOBILE TOUCH STEERING ARROWS ON SCREEN --- */}
+            {/* --- ON-SCREEN CONTROLS: STEER & NITRO BOOST --- */}
             {gameState === 'playing' && (
-              <div className="absolute inset-x-0 bottom-6 px-8 flex justify-between pointer-events-none z-10" id="on-screen-steering">
+              <div 
+                key="on-screen-steering-controls"
+                className="absolute inset-x-0 bottom-3 sm:bottom-6 px-3 sm:px-8 flex justify-between items-center pointer-events-none z-10 select-none animate-hud-slide-bottom" 
+                id="on-screen-steering"
+              >
+                
+                {/* Left Steer Button */}
                 <button 
-                  className="pointer-events-auto w-14 h-14 rounded-full border border-[#00f0ff]/50 bg-[#07070f]/80 flex items-center justify-center text-[#00f0ff] hover:bg-[#00f0ff]/20 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,240,255,0.25)] select-none cursor-pointer"
+                  className="pointer-events-auto h-13 sm:h-16 px-4 sm:px-6 rounded-2xl border border-[#00f0ff]/60 bg-[#07070f]/90 flex items-center gap-2 text-[#00f0ff] hover:bg-[#00f0ff]/20 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)] cursor-pointer"
                   onClick={() => gameLoopRef.current?.changeLaneLeft()}
-                  title="Shift Left"
+                  title="Steer Left (A or ←)"
+                  id="ctrl-steer-left"
                 >
                   <ArrowLeft className="w-6 h-6 animate-pulse" />
+                  <div className="text-left hidden sm:flex flex-col">
+                    <span className="text-xs font-black font-orbitron tracking-wider">LEFT</span>
+                    <span className="text-[9px] text-white/50 font-mono">A / ← Key</span>
+                  </div>
                 </button>
-                <button 
-                  className="pointer-events-auto w-14 h-14 rounded-full border border-[#00f0ff]/50 bg-[#07070f]/80 flex items-center justify-center text-[#00f0ff] hover:bg-[#00f0ff]/20 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,240,255,0.25)] select-none cursor-pointer"
-                  onClick={() => gameLoopRef.current?.changeLaneRight()}
-                  title="Shift Right"
+
+                {/* Big Glowing Nitro Boost Button */}
+                <button
+                  className={`pointer-events-auto relative overflow-hidden h-14 sm:h-16 px-5 sm:px-10 rounded-2xl border transition-all duration-150 flex items-center gap-2 sm:gap-3 cursor-pointer select-none active:scale-95 ${
+                    isBoosting
+                      ? 'bg-[#ff2ec4]/35 border-[#ff2ec4] text-white shadow-[0_0_30px_rgba(255,46,196,0.9)] animate-hud-vibrate-subtle'
+                      : boostFuel > 15
+                        ? 'bg-[#07070f]/90 border-amber-400/70 text-amber-300 hover:border-amber-300 shadow-[0_0_20px_rgba(255,183,3,0.35)]'
+                        : 'bg-black/80 border-white/20 text-white/40'
+                  }`}
+                  onPointerDown={() => gameLoopRef.current?.setBoost(true)}
+                  onPointerUp={() => gameLoopRef.current?.setBoost(false)}
+                  onPointerLeave={() => gameLoopRef.current?.setBoost(false)}
+                  onTouchStart={(e) => { e.preventDefault(); gameLoopRef.current?.setBoost(true); }}
+                  onTouchEnd={(e) => { e.preventDefault(); gameLoopRef.current?.setBoost(false); }}
+                  title="Hold for Nitro Speed Boost (W / ↑ / Shift / Space)"
+                  id="ctrl-nitro-boost"
                 >
+                  {/* Fuel gauge fill inside button */}
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-500/25 to-[#ff2ec4]/35 pointer-events-none transition-all duration-150"
+                    style={{ width: `${boostFuel}%` }}
+                  ></div>
+
+                  <Flame className={`w-6 h-6 sm:w-7 sm:h-7 relative z-10 ${isBoosting ? 'text-white animate-bounce' : 'text-amber-400'}`} />
+                  <div className="text-left relative z-10 flex flex-col">
+                    <span className="text-xs sm:text-sm font-black font-orbitron tracking-widest uppercase">
+                      {isBoosting ? '⚡ BOOSTING!' : 'NITRO BOOST'}
+                    </span>
+                    <span className="text-[9px] text-white/70 font-mono">
+                      HOLD W / ↑ ({boostFuel}%)
+                    </span>
+                  </div>
+                </button>
+
+                {/* Right Steer Button */}
+                <button 
+                  className="pointer-events-auto h-13 sm:h-16 px-4 sm:px-6 rounded-2xl border border-[#00f0ff]/60 bg-[#07070f]/90 flex items-center gap-2 text-[#00f0ff] hover:bg-[#00f0ff]/20 active:scale-95 transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)] cursor-pointer"
+                  onClick={() => gameLoopRef.current?.changeLaneRight()}
+                  title="Steer Right (D or →)"
+                  id="ctrl-steer-right"
+                >
+                  <div className="text-right hidden sm:flex flex-col">
+                    <span className="text-xs font-black font-orbitron tracking-wider">RIGHT</span>
+                    <span className="text-[9px] text-white/50 font-mono">D / → Key</span>
+                  </div>
                   <ArrowRight className="w-6 h-6 animate-pulse" />
                 </button>
               </div>
@@ -2335,49 +3631,119 @@ export default function App() {
 
         {/* RIGHT COLUMN: ACTIVE VEHICLE SPECIFICATIONS */}
         <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-[#00f0ff]/10 bg-[#07070f]/75 p-5 flex flex-col shrink-0 overflow-y-auto" id="garage-section">
-          <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-2">
-            <Cpu className="w-4 h-4 text-[#ff2ec4]" />
-            <h3 className="text-xs font-bold text-[#ff2ec4] tracking-[0.2em] uppercase font-orbitron">Active Vehicle</h3>
+          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+            <div className="flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-[#ff2ec4]" />
+              <h3 className="text-xs font-bold text-[#ff2ec4] tracking-[0.2em] uppercase font-orbitron">Active Vehicle</h3>
+            </div>
+            <span className="flex items-center gap-1.5 text-[9px] font-mono text-green-400 bg-green-950/40 px-2 py-0.5 rounded border border-green-500/30">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-ping"></span>
+              ONLINE
+            </span>
           </div>
 
           {/* Vehicle Wireframe Representation Preview */}
           <div className="mb-6">
-            <div className="aspect-video bg-[#12121f] border border-[#00f0ff]/20 rounded-lg flex flex-col items-center justify-center p-3 relative overflow-hidden group shadow-[inset_0_0_20px_rgba(0,240,255,0.05)]">
-              {/* Outer decorative grids */}
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,31,0.4)_1px,transparent_1px),linear-gradient(90deg,rgba(18,18,31,0.4)_1px,transparent_1px)] bg-[size:10px_10px] opacity-45 pointer-events-none"></div>
+            <div className="aspect-video bg-[#0b0c16] border border-[#00f0ff]/30 rounded-lg flex flex-col items-center justify-center p-3 relative overflow-hidden group shadow-[inset_0_0_25px_rgba(0,240,255,0.08)]">
+              {/* Outer decorative tech grid */}
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.06)_1px,transparent_1px)] bg-[size:12px_12px] opacity-70 pointer-events-none"></div>
+
+              {/* Holographic scanner laser line */}
+              <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#00f0ff] to-transparent animate-pulse pointer-events-none top-1/2 -translate-y-1/2 opacity-60"></div>
               
-              {/* Animated Glowing neon car wireframe block representation */}
-              <div 
-                className="w-24 h-8 rounded relative skew-x-12 border-b-4 transition-all duration-300 transform group-hover:scale-105"
-                style={{ 
-                  backgroundColor: `rgba(${(activeVehicle.color >> 16) & 255}, ${(activeVehicle.color >> 8) & 255}, ${activeVehicle.color & 255}, 0.25)`,
-                  borderColor: `#${activeVehicle.underglow.toString(16).padStart(6, '0')}`,
-                  boxShadow: `0 8px 20px -3px #${activeVehicle.underglow.toString(16).padStart(6, '0')}80`
-                }}
-              >
-                {/* Windshield */}
-                <div className="absolute top-1 right-2 w-7 h-2.5 bg-white/30 rounded skew-x-3"></div>
-                {/* Glowing thruster tail */}
-                <div 
-                  className="absolute left-0 bottom-1 w-2 h-4 rounded-l-xs animate-ping"
-                  style={{ backgroundColor: `#${activeVehicle.underglow.toString(16).padStart(6, '0')}` }}
-                ></div>
+              {/* Procedural SVG Silhouette Wireframe tailored to the active vehicle */}
+              <div className="relative z-10 w-full flex items-center justify-center py-2 transition-transform duration-300 group-hover:scale-105">
+                <svg viewBox="0 0 260 90" className="w-48 h-auto overflow-visible" style={{ filter: `drop-shadow(0 0 12px #${activeVehicle.underglow.toString(16).padStart(6, '0')}aa)` }}>
+                  {/* Underglow Ground Reflection */}
+                  <ellipse cx="130" cy="74" rx="90" ry="8" fill={`#${activeVehicle.underglow.toString(16).padStart(6, '0')}`} opacity="0.35" />
+                  
+                  {/* Wheel Wells / Wheels */}
+                  <g fill="#0e101a" stroke={`#${activeVehicle.underglow.toString(16).padStart(6, '0')}`} strokeWidth="2">
+                    {/* Front Wheel */}
+                    <circle cx="200" cy="65" r="14" />
+                    <circle cx="200" cy="65" r="6" fill={`#${activeVehicle.underglow.toString(16).padStart(6, '0')}`} />
+                    {/* Rear Wheel */}
+                    <circle cx="65" cy="65" r="14" />
+                    <circle cx="65" cy="65" r="6" fill={`#${activeVehicle.underglow.toString(16).padStart(6, '0')}`} />
+                  </g>
+
+                  {/* Main Car Chassis / Aerodynamic Body Contour */}
+                  <path 
+                    d={
+                      activeVehicle.id === 'titan' 
+                        ? "M 20 62 L 35 34 L 115 28 L 175 28 L 225 45 L 245 62 L 20 62 Z" 
+                        : activeVehicle.id === 'blade'
+                        ? "M 15 62 L 50 48 L 100 24 L 160 24 L 230 52 L 248 62 L 15 62 Z"
+                        : activeVehicle.id === 'glide'
+                        ? "M 20 62 L 45 42 L 105 32 L 165 32 L 225 54 L 245 62 L 20 62 Z"
+                        : "M 18 62 L 40 46 L 95 36 L 165 36 L 225 50 L 246 62 L 18 62 Z"
+                    }
+                    fill={`rgba(${(activeVehicle.color >> 16) & 255}, ${(activeVehicle.color >> 8) & 255}, ${activeVehicle.color & 255}, 0.3)`}
+                    stroke={`#${activeVehicle.underglow.toString(16).padStart(6, '0')}`}
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Glass Cockpit Canopy */}
+                  <path 
+                    d={
+                      activeVehicle.id === 'titan' 
+                        ? "M 95 38 L 125 30 L 170 30 L 185 40 Z" 
+                        : activeVehicle.id === 'blade'
+                        ? "M 85 36 L 115 26 L 155 26 L 175 40 Z"
+                        : activeVehicle.id === 'glide'
+                        ? "M 90 42 L 120 34 L 160 34 L 178 44 Z"
+                        : "M 88 44 L 118 36 L 168 36 L 182 46 Z"
+                    }
+                    fill="#00f0ff"
+                    fillOpacity="0.25"
+                    stroke="#00f0ff"
+                    strokeWidth="1.5"
+                  />
+
+                  {/* Rear Aero Spoiler / Wing */}
+                  {activeVehicle.id !== 'titan' && (
+                    <g stroke={`#${activeVehicle.underglow.toString(16).padStart(6, '0')}`} strokeWidth="2">
+                      <line x1="28" y1="52" x2="35" y2="42" />
+                      <line x1="20" y1="42" x2="48" y2="42" strokeWidth="3" />
+                    </g>
+                  )}
+
+                  {/* Twin Exhaust Afterburners */}
+                  <circle cx="16" cy="58" r="3" fill="#ff2ec4" className="animate-ping" />
+                  <line x1="2" y1="58" x2="16" y2="58" stroke="#ff2ec4" strokeWidth="2" strokeDasharray="2,2" />
+
+                  {/* Headlight Ray */}
+                  <polygon points="246,58 265,54 265,66" fill="#fff" opacity="0.6" />
+                </svg>
               </div>
 
-              <div className="absolute bottom-2 left-2 text-[8px] font-mono text-white/40 uppercase">
-                INTEGRITY // ACTIVE_CORES
+              {/* Corner metadata badges */}
+              <div className="absolute top-2 left-2 flex items-center gap-1 text-[8px] font-mono text-[#00f0ff] uppercase tracking-wider bg-black/50 px-1.5 py-0.5 rounded border border-[#00f0ff]/20">
+                <Shield className="w-2.5 h-2.5" /> SYS // SYNCHRONIZED
+              </div>
+
+              <div className="absolute bottom-2 left-2 text-[8px] font-mono text-white/50 uppercase flex items-center gap-2">
+                <span>CORE_ID: {activeVehicle.id.toUpperCase()}</span>
+                <span className="text-[#00f0ff]">•</span>
+                <span className="text-white/70">CLASS: {activeVehicle.role}</span>
               </div>
             </div>
 
             {/* Vehicle Meta Headers */}
             <div className="flex justify-between items-end mt-4">
-              <h4 className="text-lg font-black font-orbitron text-white tracking-wide">{activeVehicle.name}</h4>
-              <span className="text-[9px] px-2 py-0.5 font-bold bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/25 font-mono rounded">
+              <div>
+                <h4 className="text-lg font-black font-orbitron text-white tracking-wide">{activeVehicle.name}</h4>
+                <div className="text-[10px] text-[#ff2ec4] font-mono mt-0.5 font-semibold tracking-wider">
+                  ROLE: {activeVehicle.role.toUpperCase()}
+                </div>
+              </div>
+              <span className="text-[10px] px-2.5 py-1 font-bold bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/30 font-mono rounded tracking-wider shadow-[0_0_10px_rgba(0,240,255,0.2)]">
                 {activeVehicle.mark}
               </span>
             </div>
             
-            <p className="text-xs text-white/60 mt-2 leading-relaxed font-rajdhani border-b border-white/5 pb-4 min-h-[50px]">
+            <p className="text-xs text-white/70 mt-2.5 leading-relaxed font-rajdhani border-b border-white/5 pb-4 min-h-[48px]">
               {activeVehicle.description}
             </p>
 
@@ -2425,29 +3791,40 @@ export default function App() {
           </div>
 
           {/* Quick Vehicle Garage Selection List */}
-          <div className="mt-auto border-t border-white/5 pt-4">
+          <div className="mt-auto border-t border-white/10 pt-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] text-white/50 tracking-widest uppercase font-mono">
-                Select Fleet Ship:
+              <span className="text-[10px] text-[#00f0ff] tracking-widest uppercase font-mono font-semibold flex items-center gap-1">
+                <Car className="w-3 h-3" /> Select Your Car:
               </span>
-              <span className="text-[9px] text-green-400 font-mono">PROCEDURAL ENGINE ENGAGED</span>
+              <span className="text-[9px] text-green-400 font-mono">CLICK TO EQUIP</span>
             </div>
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {VEHICLES.map((vehicle) => {
                 const isActive = selectedVehicleId === vehicle.id;
                 return (
                   <button
                     key={vehicle.id}
                     onClick={() => handleSelectVehicle(vehicle.id)}
-                    className={`p-2.5 rounded border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       isActive 
-                        ? 'bg-white/10 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_10px_rgba(0,240,255,0.25)]' 
-                        : 'bg-[#12121f]/50 border-white/10 text-white/60 hover:text-white hover:bg-[#12121f] hover:border-white/20'
+                        ? 'bg-[#00f0ff]/15 border-[#00f0ff] text-white shadow-[0_0_15px_rgba(0,240,255,0.3)] ring-1 ring-[#00f0ff]' 
+                        : 'bg-[#12121f]/60 border-white/10 text-white/70 hover:text-white hover:bg-[#12121f] hover:border-white/25'
                     }`}
                     id={`garage-btn-${vehicle.id}`}
                   >
-                    <span className="text-[10px] font-black font-orbitron">{vehicle.name.split('-')[1] || vehicle.name}</span>
-                    <span className="text-[8px] opacity-45 font-mono">{vehicle.mark.split(' ')[1] || vehicle.mark}</span>
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-xs font-black font-orbitron text-white">{vehicle.name}</span>
+                      {isActive && (
+                        <span className="text-[8px] bg-green-500/20 text-green-400 border border-green-500/40 px-1 py-0.2 rounded font-mono">
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[9px] text-[#ff2ec4] font-mono mt-0.5">{vehicle.role}</span>
+                    <div className="flex justify-between text-[8px] text-white/50 font-mono mt-1 pt-1 border-t border-white/5">
+                      <span>Top: {vehicle.topSpeedLabel}</span>
+                      <span>Handling: {vehicle.handlingLabel}</span>
+                    </div>
                   </button>
                 );
               })}
@@ -2457,29 +3834,137 @@ export default function App() {
       </main>
 
       {/* ---------- BOTTOM STATUS BAR ---------- */}
-      <footer className="h-10 bg-black border-t border-[#00f0ff]/10 px-8 flex items-center justify-between shrink-0 text-[10px] font-mono z-20" id="footer">
-        <div className="flex gap-6 items-center text-white/40 uppercase">
+      <footer className="h-10 bg-black border-t border-[#00f0ff]/10 px-4 sm:px-8 flex items-center justify-between shrink-0 text-[10px] font-mono z-20" id="footer">
+        <div className="flex gap-4 sm:gap-6 items-center text-white/50 uppercase">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> 
-            Tokyo Gate Sync: <strong className="text-green-400">{ping}ms</strong>
+            Tokyo Gate: <strong className="text-green-400">{ping}ms</strong>
           </span>
           <span className="hidden sm:inline">Build: v4.26.0-Sleek</span>
           {gameState === 'playing' && (
-            <span className="hidden md:inline text-[#00f0ff]/80 animate-pulse">
-              SYS STATUS: ACTIVE_ACCELERATION_GRID
+            <span className="hidden md:inline text-[#00f0ff]/90 animate-pulse font-semibold">
+              ⚡ LIVE RACING HIGHWAY (TRAFFIC ACTIVE)
             </span>
           )}
         </div>
 
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-3 sm:gap-4 items-center">
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="text-[#00f0ff] hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <HelpCircle className="w-3 h-3" />
+            <span>Game Guide</span>
+          </button>
           <div className="flex gap-1.5">
             <div className="w-2 h-2 bg-[#00f0ff] rounded-full shadow-[0_0_6px_#00f0ff]"></div>
             <div className="w-2 h-2 bg-[#ff2ec4] rounded-full shadow-[0_0_6px_#ff2ec4]"></div>
             <div className="w-2 h-2 bg-[#ffb703] rounded-full shadow-[0_0_6px_#ffb703]"></div>
           </div>
-          <span className="text-white/30 text-[9px]">SECURE CONNECTION TLS_1.3</span>
         </div>
       </footer>
+
+      {/* ---------- HOW TO PLAY MODAL (USER FRIENDLY GUIDE) ---------- */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#07070f] border border-[#00f0ff]/40 rounded-2xl max-w-lg w-full p-6 text-white shadow-[0_0_40px_rgba(0,240,255,0.3)] relative max-h-[90vh] overflow-y-auto animate-fade-in">
+            {/* Close button */}
+            <button
+              onClick={() => setShowHelpModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all cursor-pointer"
+              title="Close Guide"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-2 text-[#00f0ff]">
+              <HelpCircle className="w-6 h-6 text-[#00f0ff]" />
+              <h2 className="text-xl font-black font-orbitron tracking-wider">HOW TO PLAY</h2>
+            </div>
+            <p className="text-xs text-white/70 font-rajdhani border-b border-white/10 pb-3">
+              Neon Rush 3D is a high-speed highway traffic racer. Master lane switching and boost management to survive:
+            </p>
+
+            <div className="space-y-3.5 mt-4 text-xs font-rajdhani">
+              {/* Concept */}
+              <div className="p-3.5 bg-white/5 rounded-xl border border-white/10">
+                <div className="text-sm font-bold text-[#00f0ff] font-orbitron mb-1 flex items-center gap-1.5">
+                  <Compass className="w-4 h-4 text-[#00f0ff]" /> 1. GAME CONCEPT
+                </div>
+                <p className="text-white/80 leading-relaxed">
+                  Drive your racer along a 3-lane futuristic highway cycling across coastal bridges, neon countryside, and cyber skylines. <strong>Traffic cars populate the highway right from the start!</strong> Dodge commuter cars moving at varying speeds to cover maximum distance without crashing.
+                </p>
+              </div>
+
+              {/* Controls */}
+              <div className="p-3.5 bg-white/5 rounded-xl border border-[#ff2ec4]/30">
+                <div className="text-sm font-bold text-[#ff2ec4] font-orbitron mb-1 flex items-center gap-1.5">
+                  <ArrowRight className="w-4 h-4 text-[#ff2ec4]" /> 2. CONTROLS
+                </div>
+                <ul className="space-y-2 text-white/80 mt-2 font-mono">
+                  <li className="flex items-center justify-between text-xs">
+                    <span className="font-rajdhani text-white">Steer Left / Right:</span>
+                    <span className="text-[#00f0ff] bg-black/60 px-2.5 py-1 rounded border border-[#00f0ff]/30 font-bold">A / D or ← / →</span>
+                  </li>
+                  <li className="flex items-center justify-between text-xs">
+                    <span className="font-rajdhani text-white">Nitro Speed Boost:</span>
+                    <span className="text-[#ff2ec4] bg-black/60 px-2.5 py-1 rounded border border-[#ff2ec4]/40 font-bold">Hold W / ↑ / Space</span>
+                  </li>
+                  <li className="flex items-center justify-between text-xs">
+                    <span className="font-rajdhani text-white">Pause / Resume:</span>
+                    <span className="text-white bg-black/60 px-2.5 py-1 rounded border border-white/20">P Key</span>
+                  </li>
+                  <li className="flex items-center justify-between text-xs">
+                    <span className="font-rajdhani text-white">Touch / Screen Buttons:</span>
+                    <span className="text-amber-300 bg-black/60 px-2.5 py-1 rounded border border-amber-300/30">Use on-screen steering & boost buttons</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Boost Mechanic */}
+              <div className="p-3.5 bg-white/5 rounded-xl border border-amber-400/30">
+                <div className="text-sm font-bold text-amber-400 font-orbitron mb-1 flex items-center gap-1.5">
+                  <Flame className="w-4 h-4 text-amber-400" /> 3. NITRO BOOST MECHANIC
+                </div>
+                <p className="text-white/80 leading-relaxed">
+                  Hold down <strong>W / ↑ / Space or the Boost button</strong> to activate nitro overdrive. The camera tightens, the HUD pulses with intensity, and you earn <strong>+80% bonus score multiplier</strong>. Releasing boost lets your nitro fuel recharge over time.
+                </p>
+              </div>
+
+              {/* Vehicles */}
+              <div className="p-3.5 bg-white/5 rounded-xl border border-white/10">
+                <div className="text-sm font-bold text-white font-orbitron mb-1 flex items-center gap-1.5">
+                  <Cpu className="w-4 h-4 text-[#00f0ff]" /> 4. SELECT YOUR VEHICLE
+                </div>
+                <p className="text-white/80 leading-relaxed">
+                  Choose from 4 performance vehicle configurations in the <strong>Garage</strong>:
+                </p>
+                <div className="grid grid-cols-2 gap-2 mt-2 font-mono text-[11px]">
+                  <div className="p-2 bg-black/40 rounded border border-white/10">
+                    <strong className="text-[#00f0ff]">VX-Titan:</strong> Heavy armor shield & high stability
+                  </div>
+                  <div className="p-2 bg-black/40 rounded border border-white/10">
+                    <strong className="text-[#ff2ec4]">Neon-Blade:</strong> Extreme top speed for setting records
+                  </div>
+                  <div className="p-2 bg-black/40 rounded border border-white/10">
+                    <strong className="text-cyan-300">Cyber-Glide:</strong> Ultra-responsive lane transition agility
+                  </div>
+                  <div className="p-2 bg-black/40 rounded border border-white/10">
+                    <strong className="text-amber-400">BMW E34:</strong> Retro stance cruiser tuned for high-speed highway drift
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowHelpModal(false)}
+              className="mt-5 w-full py-3.5 bg-gradient-to-r from-[#00f0ff] to-[#ff2ec4] text-black font-black rounded-xl font-orbitron tracking-widest text-sm hover:scale-102 transition-all cursor-pointer shadow-[0_0_25px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-current" /> READY TO RACE
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

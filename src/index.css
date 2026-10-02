@@ -5,3 +5,160 @@
   --font-orbitron: "Orbitron", sans-serif;
   --font-rajdhani: "Rajdhani", sans-serif;
 }
+
+@keyframes hud-jitter-subtle {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(-1px, 0.5px) scale(1.015); }
+  40% { transform: translate(1px, -0.5px) scale(1.02); }
+  60% { transform: translate(-0.5px, -1px) scale(1.015); }
+  80% { transform: translate(1px, 0.5px) scale(1.02); }
+}
+
+@keyframes hud-jitter-intense {
+  0%, 100% { transform: translate(0, 0) scale(1.03); }
+  15% { transform: translate(-2px, 1px) scale(1.05); }
+  30% { transform: translate(2px, -1px) scale(1.04); }
+  45% { transform: translate(-1.5px, -1.5px) scale(1.05); }
+  60% { transform: translate(1.5px, 1.5px) scale(1.04); }
+  75% { transform: translate(-1px, 1px) scale(1.05); }
+  90% { transform: translate(1px, -1px) scale(1.04); }
+}
+
+@keyframes speed-pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 69, 0, 0.4), inset 0 0 10px rgba(255, 69, 0, 0.2); }
+  50% { box-shadow: 0 0 28px rgba(255, 69, 0, 0.8), inset 0 0 18px rgba(255, 46, 196, 0.4); }
+}
+
+@keyframes nitro-flame-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 12px #00f0ff); }
+}
+
+.animate-hud-vibrate-subtle {
+  animation: hud-jitter-subtle 0.16s infinite linear;
+}
+
+.animate-hud-vibrate-intense {
+  animation: hud-jitter-intense 0.1s infinite linear;
+}
+
+.animate-speed-pulse {
+  animation: speed-pulse-glow 0.8s infinite ease-in-out;
+}
+
+.animate-nitro-pulse {
+  animation: nitro-flame-pulse 0.2s infinite ease-in-out;
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(1.65); opacity: 0; filter: blur(4px); }
+  25% { transform: scale(1.05); opacity: 1; filter: blur(0px); }
+  75% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.85; }
+}
+
+.animate-countdown-pop {
+  animation: countdown-pop 0.72s ease-out forwards;
+}
+
+@keyframes light-beacon-glow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 16px currentColor); }
+}
+
+.animate-beacon-glow {
+  animation: light-beacon-glow 0.6s infinite ease-in-out;
+}
+
+/* Frame-based HUD entrance slide-in animations when gameState changes to playing */
+@keyframes hud-slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translate3d(-38px, 0, 0);
+    filter: drop-shadow(-8px 0 12px rgba(0, 240, 255, 0.35));
+  }
+  65% {
+    opacity: 0.95;
+    transform: translate3d(3px, 0, 0);
+  }
+  85% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: drop-shadow(0 0 0 rgba(0, 240, 255, 0));
+  }
+}
+
+@keyframes hud-slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translate3d(38px, 0, 0);
+    filter: drop-shadow(8px 0 12px rgba(255, 46, 196, 0.35));
+  }
+  65% {
+    opacity: 0.95;
+    transform: translate3d(-3px, 0, 0);
+  }
+  85% {
+    transform: translate3d(1px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: drop-shadow(0 0 0 rgba(255, 46, 196, 0));
+  }
+}
+
+@keyframes hud-slide-in-top {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -24px, 0);
+    filter: drop-shadow(0 -6px 12px rgba(0, 240, 255, 0.3));
+  }
+  70% {
+    opacity: 0.95;
+    transform: translate3d(0, 2px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+@keyframes hud-slide-in-bottom {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 36px, 0);
+  }
+  70% {
+    opacity: 0.95;
+    transform: translate3d(0, -2px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-hud-slide-left {
+  animation: hud-slide-in-left 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-hud-slide-right {
+  animation: hud-slide-in-right 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-hud-slide-top {
+  animation: hud-slide-in-top 0.58s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+  will-change: transform, opacity;
+}
+
+.animate-hud-slide-bottom {
+  animation: hud-slide-in-bottom 0.62s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+  will-change: transform, opacity;
+}
